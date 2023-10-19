@@ -209,10 +209,15 @@ public class HybridMoFGBMLwithNSGAII <S extends PittsburghSolution<?>>
 	    		}
 	    		System.out.println(); System.out.println();
 
-	    	    new PittsburghSolutionListOutput((List<PittsburghSolution<?>>) this.getResult())
-		            .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VAR-%010d.csv", evaluations), ","))
-		            .setFunFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("FUN-%010d.csv", evaluations), ","))
-		            .print();
+	    	    /*new PittsburghSolutionListOutput((List<PittsburghSolution<?>>) this.getResult())
+	            .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VAR-%010d.csv", evaluations), ","))
+	            .setFunFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("FUN-%010d.csv", evaluations), ","))
+	            .print();*/
+
+    	        new PittsburghSolutionListOutput((List<PittsburghSolution<?>>) this.getResult())
+                .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VAR-%d.csv", evaluations), ","))
+                .setFunFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("FUN-%d.csv", evaluations), ","))
+                .print();
 
 	    		Element population = XML_manager.getInstance().createElement(XML_TagName.population);
 

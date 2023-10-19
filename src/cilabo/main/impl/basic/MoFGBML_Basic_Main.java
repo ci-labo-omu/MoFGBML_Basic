@@ -16,8 +16,6 @@ import org.uma.jmetal.operator.crossover.CrossoverOperator;
 import org.uma.jmetal.operator.mutation.MutationOperator;
 import org.uma.jmetal.problem.Problem;
 import org.uma.jmetal.util.JMetalException;
-import org.uma.jmetal.util.fileoutput.SolutionListOutput;
-import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 import org.uma.jmetal.util.observer.impl.EvaluationObserver;
 import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 
@@ -36,6 +34,7 @@ import cilabo.fuzzy.rule.antecedent.factory.impl.HeuristicRuleGenerationMethod;
 import cilabo.fuzzy.rule.consequent.factory.impl.MoFGBML_Learning;
 import cilabo.fuzzy.rule.impl.Rule_Basic;
 import cilabo.gbml.algorithm.HybridMoFGBMLwithNSGAII;
+import cilabo.gbml.objectivefunction.michigan.RuleLength;
 import cilabo.gbml.objectivefunction.pittsburgh.ErrorRate;
 import cilabo.gbml.operator.crossover.HybridGBMLcrossover;
 import cilabo.gbml.operator.crossover.MichiganCrossover;
@@ -147,7 +146,7 @@ public class MoFGBML_Basic_Main {
 		KnowledgeFactory.create2_3_4_5();
 
 		List<Pair<Integer, Integer>> bounds_Michigan = AbstractMichiganSolution.makeBounds();
-		int numberOfObjectives_Michigan = 2;
+		int numberOfObjectives_Michigan = 1;
 		int numberOfConstraints_Michigan = 0;
 
 		int numberOfvariables_Pittsburgh = Consts.INITIATION_RULE_NUM;
@@ -221,12 +220,14 @@ public class MoFGBML_Basic_Main {
 
 		/* Non-dominated solutions in final generation */
 		List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> nonDominatedSolutions = algorithm.getResult();
-	    new SolutionListOutput(nonDominatedSolutions)
-        	.setVarFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"VAR-final.csv", ","))
-        	.setFunFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"FUN-final.csv", ","))
-        	.print();
 
-	    // Test data
+		//バグが起こるので一旦コメントアウト（修正するならJmetal仕様のメソッドを書き換える）
+		/*new SolutionListOutput(nonDominatedSolutions)
+    	.setVarFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"VAR-final.csv", ","))
+    	.setFunFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"FUN-final.csv", ","))
+    	.print();*/
+
+		 // Test data
 	    ArrayList<String> strs = new ArrayList<>();
 	    String str = "pop,test";
 	    strs.add(str);
@@ -243,6 +244,75 @@ public class MoFGBML_Basic_Main {
 	    }
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
 	    Output.writeln(fileName, strs, false);
+
+		//outputResults(nonDominatedSolutions, train,test);
+
+	    // Train data
+	    ArrayList<String> strstrain = new ArrayList<>();
+	    String strtrain = "pop,train,NR,RL,Cover,test";
+	    strstrain.add(strtrain);
+
+	    for(int i = 0; i < nonDominatedSolutions.size(); i++) {
+            double errorRatetrain = nonDominatedSolutions.get(i).getObjective(0);
+            double NR = nonDominatedSolutions.get(i).getObjective(1);
+            RuleLength<MichiganSolution_Basic<Rule_Basic>> RuleLengthFunc = new RuleLength<MichiganSolution_Basic<Rule_Basic>>();
+            double TotalRuleLength = 0;
+            for (int j = 0; j < nonDominatedSolutions.get(i).getNumberOfVariables(); j++) {
+                 double RuleLength = RuleLengthFunc.function(nonDominatedSolutions.get(i).getVariable(j));
+                 TotalRuleLength += RuleLength;
+            }
+
+            double TotalCover = 0;
+            for (int j = 0; j < nonDominatedSolutions.get(i).getNumberOfVariables(); j++) {
+
+            	 double Cover = 0;
+            	 List<Double> support = new ArrayList<Double>();
+
+            	 for (int k = 0; k < train.getNdim(); k++) {
+            		  if (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) != 0) {
+
+            			  if ((nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 1) ||
+            				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 2) ||
+            				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 4)){
+            				   support.add(1.0);
+            			  }else if ((nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 3) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 5) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 11) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 12) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 13)){
+                				   support.add(1.0/2);
+            			  }else if ((nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 6) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 9)){
+                				   support.add(1.0/3);
+            			  }else if ((nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 7) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 8)){
+           				   support.add(2.0/3);
+       			          }else if ((nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 10) ||
+                				  (nonDominatedSolutions.get(i).getVariable(j).getVariable(k) == 14)){
+           				   support.add(1.0/4);
+       			          }
+            		  }
+            	 }
+            	 if (!support.isEmpty()) {
+            	     Cover = support.stream().reduce(1.0, (a, b) -> a * b);
+                   	 TotalCover += Cover;
+                 }
+            }
+
+            ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1
+			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
+		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
+
+	    	strtrain = String.valueOf(i);
+	    	strtrain += "," + errorRatetrain;
+	    	strtrain += "," + NR;
+	    	strtrain += "," + TotalRuleLength;
+	    	strtrain += "," + TotalCover;
+	    	strtrain += "," + errorRatetest;
+	    	strstrain.add(strtrain);
+	    }
+	    String fileNametrain = Consts.EXPERIMENT_ID_DIR + sep + "train.csv";
+	    Output.writeln(fileNametrain, strstrain, false);
 
 		return;
 	}
