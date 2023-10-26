@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cilabo.MoFGBML</groupId>
   <artifactId>MoFGBML</artifactId>
-  <version>23.0.0-SNAPSHOT-MOEAD</version>
+  <version>23.0.0-SNAPSHOT-Basic</version>
 
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -25,21 +25,12 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>cilabo.main.impl.MOEAD.MoFGBML_MOEAD_Main</mainClass>
+              <mainClass>cilabo.main.impl.basic.MoFGBML_Basic_Main</mainClass>
               <classpathPrefix>dependency/</classpathPrefix>>
               <addClasspath>true</addClasspath>
               <addExtensions>true</addExtensions>
             </manifest>
           </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M7</version>
-        <configuration>
-          <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
 
