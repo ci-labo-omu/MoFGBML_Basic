@@ -227,8 +227,8 @@ public class MoFGBML_Basic_Main {
     	.setFunFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"FUN-final.csv", ","))
     	.print();*/
 
-		 // Test data
-	    ArrayList<String> strs = new ArrayList<>();
+	    // Test data（Resultsに集約したためコメントアウト）
+	    /*ArrayList<String> strs = new ArrayList<>();
 	    String str = "pop,test";
 	    strs.add(str);
 
@@ -243,14 +243,14 @@ public class MoFGBML_Basic_Main {
 	    	strs.add(str);
 	    }
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
-	    Output.writeln(fileName, strs, false);
+	    Output.writeln(fileName, strs, false);*/
 
 		//outputResults(nonDominatedSolutions, train,test);
 
-	    // Train data
-	    ArrayList<String> strstrain = new ArrayList<>();
-	    String strtrain = "pop,train,NR,RL,Cover,test";
-	    strstrain.add(strtrain);
+		//Results of final generation
+	    ArrayList<String> strs = new ArrayList<>();
+	    String str = "pop,train,NR,RL,Cover,test";
+	    strs.add(str);
 
 	    for(int i = 0; i < nonDominatedSolutions.size(); i++) {
             double errorRatetrain = nonDominatedSolutions.get(i).getObjective(0);
@@ -303,16 +303,16 @@ public class MoFGBML_Basic_Main {
 			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
 
-	    	strtrain = String.valueOf(i);
-	    	strtrain += "," + errorRatetrain;
-	    	strtrain += "," + NR;
-	    	strtrain += "," + TotalRuleLength;
-	    	strtrain += "," + TotalCover;
-	    	strtrain += "," + errorRatetest;
-	    	strstrain.add(strtrain);
+	    	str = String.valueOf(i);
+	    	str += "," + errorRatetrain;
+	    	str += "," + NR;
+	    	str += "," + TotalRuleLength;
+	    	str += "," + TotalCover;
+	    	str += "," + errorRatetest;
+	    	strs.add(str);
 	    }
-	    String fileNametrain = Consts.EXPERIMENT_ID_DIR + sep + "train.csv";
-	    Output.writeln(fileNametrain, strstrain, false);
+	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
+	    Output.writeln(fileName, strs, false);
 
 		return;
 	}
