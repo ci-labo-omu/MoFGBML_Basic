@@ -90,6 +90,19 @@ public class DataSet<pattern extends Pattern<?>> {
 		return str;
 	}
 
+	/*Rowanがくれたデータセット分割メソッド*/
+	/*public DataSet<pattern> split(double split_rate){
+        Random randgen = new Random();
+        DataSet<pattern> subDataSet = new DataSet<>((int) Math.ceil(this.DataSize*split_rate),this.Ndim, this.Cnum);
+        while(this.patterns.size()>(1-split_rate)*this.DataSize){
+            int idx = randgen.nextInt(this.patterns.size());
+            subDataSet.addPattern(this.patterns.get(idx));
+            this.patterns.remove(idx);
+        }
+        this.DataSize = this.patterns.size();
+        return subDataSet;
+    }*/
+
 	/**
 	 * このインスタンスが持つ属性数．次元を返します。
 	 * @return 返される属性数．次元

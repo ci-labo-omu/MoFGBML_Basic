@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
@@ -16,6 +18,7 @@ import org.uma.jmetal.operator.crossover.CrossoverOperator;
 import org.uma.jmetal.operator.mutation.MutationOperator;
 import org.uma.jmetal.problem.Problem;
 import org.uma.jmetal.util.JMetalException;
+import org.uma.jmetal.util.SolutionListUtils;
 import org.uma.jmetal.util.observer.impl.EvaluationObserver;
 import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 
@@ -114,7 +117,7 @@ public class MoFGBML_Basic_Main {
 		DataSet<Pattern_Basic> train = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTrains().get(0);
 
 
-		/** XML ファイル出力ようインスタンスの生成*/
+		/** XML ファイル出力用インスタンスの生成*/
 		XML_manager.getInstance();
 
 		/* Run MoFGBML algorithm =============== */
@@ -221,7 +224,43 @@ public class MoFGBML_Basic_Main {
 		/* Non-dominated solutions in final generation */
 		List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> nonDominatedSolutions = algorithm.getResult();
 
-		//バグが起こるので一旦コメントアウト（修正するならJmetal仕様のメソッドを書き換える）
+		/* archive population */
+		Set<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> ARC = algorithm.getArchivePopulation();
+
+		List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> ARCList = new ArrayList<>(ARC);
+
+		/*アーカイブから非劣解を抽出（分割なしversion）*/
+		//List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> nonDominatedSolutionsARC = SolutionListUtils.getNonDominatedSolutions(ARCList);
+
+		/*アーカイブから非劣解を抽出（分割ありversion）*/
+		//サブリスト数（暫定で100に設定）
+		int numberOfSublists = 100;
+
+		//サブリストを格納するリスト
+		List<List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>> partitionedList = new ArrayList<>();
+
+		//分割に用いるパラメータの算出
+		int totalSize = ARCList.size();
+        int chunkSize = totalSize / numberOfSublists;
+        int remainder = totalSize % numberOfSublists;
+        int start = 0;
+
+        // 元のリストの要素をサブリストに分割
+        for (int i = 0; i < numberOfSublists; i++) {
+            int end = start + chunkSize + (i < remainder ? 1 : 0);
+            partitionedList.add(new ArrayList<>(ARCList.subList(start, end)));
+            start = end;
+        }
+
+        // partitionedList内の各サブリストにgetNonDominatedSolutionsを適用し、結果を統合
+        List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> mergedList = partitionedList.stream()
+                .flatMap(list -> SolutionListUtils.getNonDominatedSolutions(list).stream())
+                .collect(Collectors.toList());
+
+        //統合後のリストから非劣解を抽出し，最終的な個体群とする
+        List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> nonDominatedSolutionsARC = SolutionListUtils.getNonDominatedSolutions(mergedList);
+
+        //バグ含むのでコメントアウト（修正するならJmetal仕様のメソッドを書き換える）
 		/*new SolutionListOutput(nonDominatedSolutions)
     	.setVarFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"VAR-final.csv", ","))
     	.setFunFileOutputContext(new DefaultFileOutputContext(Consts.EXPERIMENT_ID_DIR+sep+"FUN-final.csv", ","))
@@ -249,7 +288,7 @@ public class MoFGBML_Basic_Main {
 
 		//Results of final generation
 	    ArrayList<String> strs = new ArrayList<>();
-	    String str = "pop,train,NR,RL,Cover,test";
+	    String str = "pop,train,NR,RL,Cover,RW,test";
 	    strs.add(str);
 
 	    for(int i = 0; i < nonDominatedSolutions.size(); i++) {
@@ -299,6 +338,14 @@ public class MoFGBML_Basic_Main {
                  }
             }
 
+            double TotalRW = 0;
+            for (int j = 0; j < nonDominatedSolutions.get(i).getNumberOfVariables(); j++) {
+                double RW = (Double) nonDominatedSolutions.get(i).getVariable(j).getRuleWeight().getRuleWeightValue();
+                TotalRW += RW;
+            }
+            double AveRW = TotalRW/(nonDominatedSolutions.get(i).getNumberOfVariables());
+
+
             ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1
 			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
@@ -308,11 +355,87 @@ public class MoFGBML_Basic_Main {
 	    	str += "," + NR;
 	    	str += "," + TotalRuleLength;
 	    	str += "," + TotalCover;
+	    	str += "," + AveRW;
 	    	str += "," + errorRatetest;
 	    	strs.add(str);
 	    }
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
 	    Output.writeln(fileName, strs, false);
+
+	    //Results of archive population
+	    ArrayList<String> strsARC = new ArrayList<>();
+	    String strARC = "pop,train,NR,RL,Cover,RW,test";
+	    strsARC.add(strARC);
+
+	    for(int i = 0; i < nonDominatedSolutionsARC.size(); i++) {
+            double errorRatetrainARC = nonDominatedSolutionsARC.get(i).getObjective(0);
+            double NRARC = nonDominatedSolutionsARC.get(i).getObjective(1);
+            RuleLength<MichiganSolution_Basic<Rule_Basic>> RuleLengthFuncARC = new RuleLength<MichiganSolution_Basic<Rule_Basic>>();
+            double TotalRuleLengthARC = 0;
+            for (int j = 0; j < nonDominatedSolutionsARC.get(i).getNumberOfVariables(); j++) {
+                 double RuleLengthARC = RuleLengthFuncARC.function(nonDominatedSolutionsARC.get(i).getVariable(j));
+                 TotalRuleLengthARC += RuleLengthARC;
+            }
+
+            double TotalCoverARC = 0;
+            for (int j = 0; j < nonDominatedSolutionsARC.get(i).getNumberOfVariables(); j++) {
+
+            	 double CoverARC = 0;
+            	 List<Double> supportARC = new ArrayList<Double>();
+
+            	 for (int k = 0; k < train.getNdim(); k++) {
+            		  if (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) != 0) {
+
+            			  if ((nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 1) ||
+            				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 2) ||
+            				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 4)){
+            				   supportARC.add(1.0);
+            			  }else if ((nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 3) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 5) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 11) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 12) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 13)){
+                				   supportARC.add(1.0/2);
+            			  }else if ((nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 6) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 9)){
+                				   supportARC.add(1.0/3);
+            			  }else if ((nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 7) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 8)){
+           				   supportARC.add(2.0/3);
+       			          }else if ((nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 10) ||
+                				  (nonDominatedSolutionsARC.get(i).getVariable(j).getVariable(k) == 14)){
+           				   supportARC.add(1.0/4);
+       			          }
+            		  }
+            	 }
+            	 if (!supportARC.isEmpty()) {
+            	     CoverARC = supportARC.stream().reduce(1.0, (a, b) -> a * b);
+                   	 TotalCoverARC += CoverARC;
+                 }
+            }
+
+            double TotalRWARC = 0;
+            for (int j = 0; j < nonDominatedSolutionsARC.get(i).getNumberOfVariables(); j++) {
+                double RWARC = (Double) nonDominatedSolutionsARC.get(i).getVariable(j).getRuleWeight().getRuleWeightValue();
+                TotalRWARC += RWARC;
+            }
+            double AveRWARC = TotalRWARC/(nonDominatedSolutionsARC.get(i).getNumberOfVariables());
+
+            ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1ARC
+			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
+		    double errorRatetestARC = function1ARC.function(nonDominatedSolutionsARC.get(i), test);
+
+	    	strARC = String.valueOf(i);
+	    	strARC += "," + errorRatetrainARC;
+	    	strARC += "," + NRARC;
+	    	strARC += "," + TotalRuleLengthARC;
+	    	strARC += "," + TotalCoverARC;
+	    	strARC += "," + AveRWARC;
+	    	strARC += "," + errorRatetestARC;
+	    	strsARC.add(strARC);
+	    }
+	    String fileNameARC = Consts.EXPERIMENT_ID_DIR + sep + "resultsARC.csv";
+	    Output.writeln(fileNameARC, strsARC, false);
 
 		return;
 	}

@@ -22,11 +22,11 @@ public final class Antecedent_Basic extends AbstractAntecedent{
 			throw new IllegalArgumentException("antecedentIndex and pattern must be same length");
 		}else {
 			for(int i = 0; i < attributeVector.getNumberOfDimension(); i++) {
-				if(antecedentIndex[i] <= 0 && attributeVector.getAttributeValue(i) <= 0) {
+				if(antecedentIndex[i] < 0 && attributeVector.getAttributeValue(i) < 0) {
 					// categorical
 					if(antecedentIndex[i] == (int)attributeVector.getAttributeValue(i)) grade[i] = 1.0;
 					else grade[i] = 0.0;
-				}else if(antecedentIndex[i] >= 0 && attributeVector.getAttributeValue(i) >= 0){
+				}else if(antecedentIndex[i] > 0 && attributeVector.getAttributeValue(i) >= 0){
 					// numerical
 					grade[i] = this.getFuzzySet(i, antecedentIndex[i]).getMembershipValue((float)attributeVector.getAttributeValue(i));
 				}else if(antecedentIndex[i] == 0) {
