@@ -57,7 +57,7 @@ import xml.XML_manager;
 /**
  * @version 1.0
  *
- * FAN2021時点
+ * 07/30/2024
  */
 public class MoFGBML_Basic_Main {
 	public static void main(String[] args) throws JMetalException, FileNotFoundException {
@@ -252,7 +252,7 @@ public class MoFGBML_Basic_Main {
             start = end;
         }
 
-        // partitionedList内の各サブリストにgetNonDominatedSolutionsを適用し、結果を統合
+        // partitionedList内の各サブリストにgetNonDominatedSolutionsを適用し，結果を統合
         List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> mergedList = partitionedList.stream()
                 .flatMap(list -> SolutionListUtils.getNonDominatedSolutions(list).stream())
                 .collect(Collectors.toList());

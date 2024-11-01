@@ -41,7 +41,7 @@ def run(Dataset):
                 "dataset" : Dataset, 
                 "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-Basic.jar", 
                 "algroithmID" : f"Basic\{Dataset}Basic",
-                "parallelCores" : "50",
+                "parallelCores" : "6",
                 "experimentID" : f"trial{i}{j}",
                 "trainFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tra.dat",
                 "testFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tst.dat"} \

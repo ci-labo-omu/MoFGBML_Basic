@@ -71,7 +71,7 @@ public final class HeuristicRuleGenerationMethod implements AntecedentIndexFacto
 
 			// Numerical
 			int fuzzySetNum = Knowledge.getInstance().getFuzzySetNum(n)-1; //dontCare以外のファジィ集合の総数
-			if(fuzzySetNum < 1) { antecedentIndex[n] = 0; continue; } //Dont care以外のファジィ集合が存在しない場合はDonat careに固定
+			if(fuzzySetNum < 1) { antecedentIndex[n] = 0; continue; } //Dont care以外のファジィ集合が存在しない場合はDont careに固定
 
 			double[] membershipValueRoulette = new double[fuzzySetNum];
 			double sumMembershipValue = 0;
