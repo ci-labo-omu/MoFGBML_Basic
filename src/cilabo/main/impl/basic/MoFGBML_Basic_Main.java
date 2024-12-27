@@ -19,6 +19,7 @@ import org.uma.jmetal.operator.mutation.MutationOperator;
 import org.uma.jmetal.problem.Problem;
 import org.uma.jmetal.util.JMetalException;
 import org.uma.jmetal.util.SolutionListUtils;
+import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 import org.uma.jmetal.util.observer.impl.EvaluationObserver;
 import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 
@@ -49,6 +50,7 @@ import cilabo.gbml.solution.michiganSolution.MichiganSolution.MichiganSolutionBu
 import cilabo.gbml.solution.michiganSolution.impl.MichiganSolution_Basic;
 import cilabo.gbml.solution.pittsburghSolution.impl.PittsburghSolution_Basic;
 import cilabo.main.Consts;
+import cilabo.util.fileoutput.PittsburghSolutionListOutputX;
 import cilabo.utility.Output;
 import cilabo.utility.Parallel;
 import cilabo.utility.Random;
@@ -259,6 +261,11 @@ public class MoFGBML_Basic_Main {
 
         //統合後のリストから非劣解を抽出し，最終的な個体群とする
         List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> nonDominatedSolutionsARC = SolutionListUtils.getNonDominatedSolutions(mergedList);
+
+		String outputRootDir = Consts.EXPERIMENT_ID_DIR;
+		new PittsburghSolutionListOutputX(nonDominatedSolutionsARC)
+        .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VARARC-%d.csv", Consts.TERMINATE_EVALUATION), ","))
+        .print();
 
         //バグ含むのでコメントアウト（修正するならJmetal仕様のメソッドを書き換える）
 		/*new SolutionListOutput(nonDominatedSolutions)

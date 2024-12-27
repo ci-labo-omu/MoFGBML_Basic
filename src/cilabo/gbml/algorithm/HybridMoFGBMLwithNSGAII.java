@@ -209,6 +209,20 @@ public class HybridMoFGBMLwithNSGAII <S extends PittsburghSolution<?>>
 
 	    observable.setChanged();
 	    observable.notifyObservers(algorithmStatusData);
+
+	    String sep = File.separator;
+	    Integer evaluations = (Integer)algorithmStatusData.get("EVALUATIONS");
+
+	    if(evaluations != null) {
+	        new PittsburghSolutionListOutput((List<PittsburghSolution<?>>) this.getResult())
+            .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VAR-%d.csv", evaluations), ","))
+            .setFunFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("FUN-%d.csv", evaluations), ","))
+            .print();
+	    }
+		else {
+			JMetalLogger.logger.warning(getClass().getName()
+			+ ": The algorithm has not registered yet any info related to the EVALUATIONS key");
+		}
 	}
 
 
