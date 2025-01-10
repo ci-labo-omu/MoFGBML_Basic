@@ -15,7 +15,7 @@ public final class SingleWinnerRuleSelection <michiganSolution extends MichiganS
 
 	/**
 	 * 単一勝利ルールに基づいて勝利ルールを出力する．
-	 * 適合度が最大値となるMichiganSolutionを返す．適合度が更新されない場合or適合度が最大値となるMichiganSolutionが複数複数存在し，
+	 * 適合度が最大値となるMichiganSolutionを返す．適合度が更新されない場合or適合度が最大値となるMichiganSolutionが複数存在し，
 	 * それらの結論部クラスが異なる場合は識別不能とし，nullを返す．
 	 * @param michiganSolutionList 識別器
 	 * @param attributeVector 入力パターン
@@ -33,9 +33,7 @@ public final class SingleWinnerRuleSelection <michiganSolution extends MichiganS
 			MichiganSolution<?> michiganSolution = michiganSolutionList.get(q);
 			if(michiganSolution.getClassLabel().isRejectedClassLabel()) {
 				throw new IllegalArgumentException("argument [michiganSolutionList] has michiganSolution with Rejected ClassLabel @SingleWinnerRuleSelection.classify()");}
-			double membership = michiganSolution.getFitnessValue(pattern.getAttributeVector()); //適合度計算
-			double CF = (Double) michiganSolution.getRuleWeight().getRuleWeightValue();
-			double value = membership * CF;
+			double value = michiganSolution.getFitnessValue(pattern.getAttributeVector()); //適合度計算
 
 			//最大値更新ケース
 			if(value > max) {
