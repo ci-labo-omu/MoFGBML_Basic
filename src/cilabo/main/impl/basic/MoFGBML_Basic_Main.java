@@ -26,6 +26,7 @@ import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 import cilabo.data.DataSet;
 import cilabo.data.DataSetManager;
 import cilabo.data.Input;
+import cilabo.data.pattern.Pattern;
 import cilabo.data.pattern.impl.Pattern_Basic;
 import cilabo.fuzzy.classifier.Classifier;
 import cilabo.fuzzy.classifier.classification.Classification;
@@ -35,6 +36,7 @@ import cilabo.fuzzy.knowledge.factory.HomoTriangleKnowledgeFactory;
 import cilabo.fuzzy.knowledge.membershipParams.Parameters;
 import cilabo.fuzzy.rule.Rule.RuleBuilder;
 import cilabo.fuzzy.rule.antecedent.factory.impl.HeuristicRuleGenerationMethod;
+import cilabo.fuzzy.rule.consequent.classLabel.ClassLabel;
 import cilabo.fuzzy.rule.consequent.factory.impl.MoFGBML_Learning;
 import cilabo.fuzzy.rule.impl.Rule_Basic;
 import cilabo.gbml.algorithm.HybridMoFGBMLwithNSGAII;
@@ -46,6 +48,7 @@ import cilabo.gbml.operator.crossover.PittsburghCrossover;
 import cilabo.gbml.operator.mutation.PittsburghMutation;
 import cilabo.gbml.problem.pittsburghFGBML_Problem.impl.PittsburghFGBML_Basic;
 import cilabo.gbml.solution.michiganSolution.AbstractMichiganSolution;
+import cilabo.gbml.solution.michiganSolution.MichiganSolution;
 import cilabo.gbml.solution.michiganSolution.MichiganSolution.MichiganSolutionBuilder;
 import cilabo.gbml.solution.michiganSolution.impl.MichiganSolution_Basic;
 import cilabo.gbml.solution.pittsburghSolution.impl.PittsburghSolution_Basic;
@@ -357,6 +360,12 @@ public class MoFGBML_Basic_Main {
             ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1
 			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
+
+		    for(int k = 0; k < test.getDataSize(); k++) {
+				Pattern<?> pattern = test.getPattern(k);
+				MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+				ClassLabel<?> class_pred = winnerSolution.getClassLabel();
+		    }
 
 	    	str = String.valueOf(i);
 	    	str += "," + errorRatetrain;
