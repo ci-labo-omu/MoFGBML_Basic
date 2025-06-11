@@ -299,8 +299,11 @@ public class MoFGBML_Basic_Main {
 
 		//Results of final generation
 	    ArrayList<String> strs = new ArrayList<>();
+	    ArrayList<String> strs_part = new ArrayList<>();
 	    String str = "pop,train,NR,RL,Cover,RW,test";
+	    String str_part = "pop,NR,train,test,pred_train,pred_test";
 	    strs.add(str);
+	    strs_part.add(str_part);
 
 	    for(int i = 0; i < nonDominatedSolutions.size(); i++) {
             double errorRatetrain = nonDominatedSolutions.get(i).getObjective(0);
@@ -361,11 +364,28 @@ public class MoFGBML_Basic_Main {
 			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
 
-		    for(int k = 0; k < test.getDataSize(); k++) {
-				Pattern<?> pattern = test.getPattern(k);
-				MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
-				ClassLabel<?> class_pred = winnerSolution.getClassLabel();
-		    }
+
+		 // --- 訓練データに対する予測と正誤判定をリストに格納 ---
+		    List<String> trainPredictionsList = new ArrayList<>();
+	        for(int k = 0; k < train.getDataSize(); k++) {
+	            Pattern<?> pattern = train.getPattern(k);
+	            MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+	            ClassLabel<?> class_pred_train = winnerSolution.getClassLabel();
+	            trainPredictionsList.add(class_pred_train.toString());
+	        }
+	        // リストをセミコロン区切りの文字列に変換
+	        String predictionTrainStr = trainPredictionsList.stream().collect(Collectors.joining(","));
+
+	        // --- テストデータに対する予測をリストに格納 ---
+	        List<String> testPredictionsList = new ArrayList<>();
+	        for(int k = 0; k < test.getDataSize(); k++) {
+	            Pattern<?> pattern = test.getPattern(k);
+	            MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+	            ClassLabel<?> class_pred_test = winnerSolution.getClassLabel();
+	            testPredictionsList.add(class_pred_test.toString());
+	        }
+	        // リストをセミコロン区切りの文字列に変換
+	        String predictionTestStr = testPredictionsList.stream().collect(Collectors.joining(","));
 
 	    	str = String.valueOf(i);
 	    	str += "," + errorRatetrain;
@@ -375,9 +395,21 @@ public class MoFGBML_Basic_Main {
 	    	str += "," + AveRW;
 	    	str += "," + errorRatetest;
 	    	strs.add(str);
+	    	
+	    	//こっちはpartial用のリザルト
+	    	str_part = String.valueOf(i);
+	    	str_part += "," + NR;
+	    	str_part += "," + errorRatetrain;
+	    	str_part += "," + errorRatetest;
+	    	str_part += "," + predictionTrainStr;
+	    	str_part += "," + predictionTestStr;
+	    	strs_part.add(str_part);
+	    			
 	    }
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
 	    Output.writeln(fileName, strs, false);
+	    String fileName_part = Consts.EXPERIMENT_ID_DIR + sep + "results_part.csv";
+	    Output.writeln(fileName_part, strs_part, false);
 
 	    //Results of archive population
 	    ArrayList<String> strsARC = new ArrayList<>();
@@ -451,6 +483,7 @@ public class MoFGBML_Basic_Main {
 	    	strARC += "," + errorRatetestARC;
 	    	strsARC.add(strARC);
 	    }
+	    System.out.println(Consts.EXPERIMENT_ID_DIR);
 	    String fileNameARC = Consts.EXPERIMENT_ID_DIR + sep + "resultsARC.csv";
 	    Output.writeln(fileNameARC, strsARC, false);
 
