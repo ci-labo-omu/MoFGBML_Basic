@@ -370,17 +370,25 @@ public class MoFGBML_Basic_Main {
 	        for(int k = 0; k < train.getDataSize(); k++) {
 	            Pattern<?> pattern = train.getPattern(k);
 	            MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+	            if (winnerSolution == null) {
+	                trainPredictionsList.add("-1"); // 勝者がいない場合は-1を追加
+	                continue; // 勝者がいない場合はスキップ
+	            }
 	            ClassLabel<?> class_pred_train = winnerSolution.getClassLabel();
 	            trainPredictionsList.add(class_pred_train.toString());
 	        }
+	        
 	        // リストをセミコロン区切りの文字列に変換
 	        String predictionTrainStr = trainPredictionsList.stream().collect(Collectors.joining(","));
-
 	        // --- テストデータに対する予測をリストに格納 ---
 	        List<String> testPredictionsList = new ArrayList<>();
 	        for(int k = 0; k < test.getDataSize(); k++) {
 	            Pattern<?> pattern = test.getPattern(k);
 	            MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+	            if (winnerSolution == null) {
+	                trainPredictionsList.add("-1"); // 勝者がいない場合は-1を追加
+	                continue; // 
+	            }
 	            ClassLabel<?> class_pred_test = winnerSolution.getClassLabel();
 	            testPredictionsList.add(class_pred_test.toString());
 	        }
@@ -401,11 +409,12 @@ public class MoFGBML_Basic_Main {
 	    	str_part += "," + NR;
 	    	str_part += "," + errorRatetrain;
 	    	str_part += "," + errorRatetest;
-	    	str_part += "," + predictionTrainStr;
-	    	str_part += "," + predictionTestStr;
+	    	str_part += ",\"" + predictionTrainStr + "\"";
+	    	str_part += ",\"" + predictionTestStr + "\"";    // ダブルクォーテーションで囲む
 	    	strs_part.add(str_part);
 	    			
 	    }
+	    System.out.println("ああああああああああああああああああああああああああああああ");
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
 	    Output.writeln(fileName, strs, false);
 	    String fileName_part = Consts.EXPERIMENT_ID_DIR + sep + "results_part.csv";
