@@ -10,9 +10,10 @@ import cilabo.fuzzy.rule.consequent.classLabel.impl.ClassLabel_Basic;
 public final class Pattern_Density extends Pattern <ClassLabel_Basic> {
 
 	/** Pattern_Basic コンストラクタ
-	 * @param id このインスタンスに与えられたID．ID which is ginve to this instance
+	 * @param id このインスタンスに与えられたID．ID which is given to this instance
 	 * @param attributeVector 属性値クラス．attribute class
 	 * @param targetClass ラベルクラス．label class */
+	
 	public Pattern_Density(int id, AttributeVector attributeVector, ClassLabel_Basic targetClass) {
 		super(id, attributeVector, targetClass);
 	}

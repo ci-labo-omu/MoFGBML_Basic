@@ -88,7 +88,7 @@ public class MoFGBML_MOEAD_Main {
 
 		// Initialize ForkJoinPool
 		Parallel.getInstance().initLearningForkJoinPool(MoFGBML_MOEAD_CommandLineArgs.parallelCores);
-
+		System.out.println(MoFGBML_MOEAD_CommandLineArgs.parallelCores);
 		System.out.println("Processors: " + Runtime.getRuntime().availableProcessors() + " ");
 		System.out.print("args: ");
 		for(int i = 0; i < args.length; i++) {
@@ -117,11 +117,10 @@ public class MoFGBML_MOEAD_Main {
 
 		/** XML ファイル出力ようインスタンスの生成*/
 		XML_manager.getInstance();
-
 		/* Run MoFGBML algorithm =============== */
 		HybridStyleMoFGBML(train, test);
 		/* ===================================== */
-
+		
 		try {
 			XML_manager.getInstance().output(Consts.EXPERIMENT_ID_DIR);
 		} catch (TransformerException | IOException e) {
@@ -139,6 +138,8 @@ public class MoFGBML_MOEAD_Main {
 	 *
 	 */
 	public static void HybridStyleMoFGBML (DataSet<Pattern_Basic> train, DataSet<Pattern_Basic> test) {
+		long startTime = System.nanoTime();
+
 		Random.getInstance().initRandom(2022);
 		String sep = File.separator;
 
@@ -242,8 +243,12 @@ public class MoFGBML_MOEAD_Main {
 	    	str += "," + errorRate;
 	    	strs.add(str);
 	    }
+		long endTime = System.nanoTime();
+		double duration = (endTime - startTime) / 1_000_000_000.0;
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
+	    String fileName_time = Consts.EXPERIMENT_ID_DIR + sep + "time.txt";
 	    Output.writeln(fileName, strs, false);
+	    Output.writeln(fileName_time, String.valueOf(duration), false);
 
 		return;
 	}
