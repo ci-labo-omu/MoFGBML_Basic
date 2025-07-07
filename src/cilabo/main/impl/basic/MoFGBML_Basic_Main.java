@@ -386,7 +386,7 @@ public class MoFGBML_Basic_Main {
 	            Pattern<?> pattern = test.getPattern(k);
 	            MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
 	            if (winnerSolution == null) {
-	                trainPredictionsList.add("-1"); // 勝者がいない場合は-1を追加
+	                testPredictionsList.add("-1"); // 勝者がいない場合は-1を追加
 	                continue; // 
 	            }
 	            ClassLabel<?> class_pred_test = winnerSolution.getClassLabel();
@@ -414,7 +414,6 @@ public class MoFGBML_Basic_Main {
 	    	strs_part.add(str_part);
 	    			
 	    }
-	    System.out.println("ああああああああああああああああああああああああああああああ");
 	    String fileName = Consts.EXPERIMENT_ID_DIR + sep + "results.csv";
 	    Output.writeln(fileName, strs, false);
 	    String fileName_part = Consts.EXPERIMENT_ID_DIR + sep + "results_part.csv";

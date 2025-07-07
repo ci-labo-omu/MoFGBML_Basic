@@ -31,15 +31,15 @@ public class Consts {
 	public static int POPULATION_SIZE = 60;
 	public static int OFFSPRING_POPULATION_SIZE = 60;
 	public static int TERMINATE_GENERATION = 5000;
-	public static int TERMINATE_EVALUATION = 300000;
+	public static int TERMINATE_EVALUATION = 180000;
 	public static int OUTPUT_FREQUENCY = 6000;
 
 	//Random Number ***************************************
 	public static int RAND_SEED = 2020;
 
 	//OS ************************************
-	public static int WINDOWS = 0;	//Windows
-	public static int UNIX = 1;		//Unix or Mac
+	public static int WINDOWS = 1;	//Windows
+	public static int UNIX = 0;		//Unix or Mac
 
 	//Fuzzy Clasifier ************************************
 	/** don't care適応確率を定数にするかどうか */

@@ -38,11 +38,11 @@ def detection_async_parallel(_requests):
 
 if __name__ == "__main__":
     
-    Dataset = "appendicitis"
+    Dataset = "vehicle"
 
     requests = [{"trial" : f"{i}_{j}",
                 "dataset" : Dataset, 
-                "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-Basic.jar", 
+                "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-MOEAD.jar", 
                 "algroithmID" : f"Basic\{Dataset}Basic",
                 "parallelCores" : "6",
                 "experimentID" : f"trial{i}{j}",

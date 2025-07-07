@@ -206,5 +206,5 @@ class dataset_view():
         figname =  self.filename.replace(".csv", "")
         figSave(fig, filename = figname + "_P5",  datesetname = figname)
         
-# for name in ["australian", "phoneme", "iris", "bupa", "pima", "sonar", "vehicle", "wine", "yeast"]:
-#     dataset_view(name)
+for name in ["australian", "phoneme", "iris", "bupa", "pima", "sonar", "vehicle", "wine", "yeast"]:
+     dataset_view(name)
