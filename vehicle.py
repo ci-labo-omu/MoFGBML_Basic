@@ -42,7 +42,7 @@ def detection_async_parallel(_requests):
 
 
 if __name__ == "__main__":
-    Dataset = "vowel"
+    Dataset = "satimage"
     #time.sleep(8000)
     requests = [{"trial" : f"{i}_{j}",
                 "dataset" : Dataset, 
