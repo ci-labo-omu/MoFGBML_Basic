@@ -17,27 +17,33 @@ public abstract class Pattern <ClassLabelObject extends ClassLabel<?>>{
 	protected final AttributeVector attributeVector;
 	/** クラスラベル．class label*/
 	protected final ClassLabelObject targetClass;
+	/** このインスタンスが持つ密度情報 */
+	protected final int density;
 
 	/** 入力されたデータを基にインスタンスを生成
 	 * @param id このインスタンスに与えられたID．ID which is ginve to this instance
 	 * @param attributeVector 属性値クラス．attribute class
 	 * @param targetClass クラスラベル．class label */
-	public Pattern(int id, AttributeVector attributeVector, ClassLabelObject targetClass) {
+	public Pattern(int id, AttributeVector attributeVector, ClassLabelObject targetClass, int density) {
 		if(id < 0) {
 			throw new IllegalArgumentException("argument [id] must be positive integer @" + this.getClass().getSimpleName());}
 		else if(Objects.isNull(attributeVector)) {
 			throw new IllegalArgumentException("argument [inputVector] is null @" + this.getClass().getSimpleName());}
 		else if(Objects.isNull(targetClass)) {
 			throw new IllegalArgumentException("argument [trueClass] is null @" + this.getClass().getSimpleName());}
+		else if(density <= 0) {
+			throw new IllegalArgumentException("argument [density] must be positive integer @" + this.getClass().getSimpleName());}
+		
 		this.id = id;
 		this.attributeVector = attributeVector;
 		this.targetClass = targetClass;
+		this.density = density;
 	}
 
 	/**
 	 * このインスタンスが持つIDを返します。<br>
 	 * Returns ID that this instance has.
-	 * @return 返されるこのインスタンスに与えられたID．ID which is ginve to this instance to return
+	 * @return 返されるこのインスタンスに与えられたID．ID which is given to this instance to return
 	 */
 	public int getID() {
 		return this.id;
@@ -70,7 +76,14 @@ public abstract class Pattern <ClassLabelObject extends ClassLabel<?>>{
 	public double getAttributeValue(int index) {
 		return this.attributeVector.getAttributeValue(index);
 	}
-
+	
+	/** このインスタンスが持つ密度情報を返します。<br>
+	 * Returns density information that this instance has.
+	 * @return 返される密度情報．density information to return
+	 */
+	public int getDensity() {
+		return this.density;
+	}
 	/**このインスタンスが持つ結論部ラベルクラスを返します。<br>
 	 * Returns conclusion label class that this instance has.
 	 * @return 返される結論部ラベルクラス．conclusion label class to return

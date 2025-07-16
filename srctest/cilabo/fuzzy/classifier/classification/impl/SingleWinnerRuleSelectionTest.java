@@ -20,13 +20,16 @@ class SingleWinnerRuleSelectionTest {
 	static MakeTestObject testObject;
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
-		testObject = new MakeTestObject("iris", 0, 0);
+		testObject = new MakeTestObject("vehicle", 0, 0);
 	}
 
 	@Test
 	void test() {
+		System.out.println("testObject: " + testObject);
+
 		List<MichiganSolution_Basic<Rule_Basic>> michiganSolutionList =
 			new ArrayList<MichiganSolution_Basic<Rule_Basic>>();
+
 		for(MichiganSolution_Basic<Rule_Basic> solution_i: testObject.makeMichiganSolutionArray(20)) {
 			michiganSolutionList.add(solution_i);
 		}
