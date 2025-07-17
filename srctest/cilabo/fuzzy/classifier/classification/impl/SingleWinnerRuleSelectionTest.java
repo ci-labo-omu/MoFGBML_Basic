@@ -25,7 +25,6 @@ class SingleWinnerRuleSelectionTest {
 
 	@Test
 	void test() {
-		System.out.println("testObject: " + testObject);
 
 		List<MichiganSolution_Basic<Rule_Basic>> michiganSolutionList =
 			new ArrayList<MichiganSolution_Basic<Rule_Basic>>();

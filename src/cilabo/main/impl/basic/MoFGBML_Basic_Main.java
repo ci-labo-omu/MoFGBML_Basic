@@ -27,6 +27,7 @@ import cilabo.data.DataSet;
 import cilabo.data.DataSetManager;
 import cilabo.data.Input;
 import cilabo.data.pattern.Pattern;
+import cilabo.data.pattern.impl.PatternDensity;
 import cilabo.data.pattern.impl.Pattern_Basic;
 import cilabo.fuzzy.classifier.Classifier;
 import cilabo.fuzzy.classifier.classification.Classification;
@@ -119,7 +120,7 @@ public class MoFGBML_Basic_Main {
 		/* Load Dataset ======================== */
 		Input.loadTrainTestFiles_Basic(MoFGBML_Basic_CommandLineArgs.trainFile, MoFGBML_Basic_CommandLineArgs.testFile);
 		DataSet<Pattern_Basic> test = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTests().get(0);
-		DataSet<Pattern_Basic> train = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTrains().get(0);
+		DataSet<PatternDensity> train = (DataSet<PatternDensity>) DataSetManager.getInstance().getTrains().get(0);
 
 
 		/** XML ファイル出力用インスタンスの生成*/
@@ -145,7 +146,7 @@ public class MoFGBML_Basic_Main {
 	/**
 	 *
 	 */
-	public static void HybridStyleMoFGBML (DataSet<Pattern_Basic> train, DataSet<Pattern_Basic> test) {
+	public static void HybridStyleMoFGBML (DataSet<PatternDensity> train, DataSet<Pattern_Basic> test) {
 		Random.getInstance().initRandom(2022);
 		String sep = File.separator;
 

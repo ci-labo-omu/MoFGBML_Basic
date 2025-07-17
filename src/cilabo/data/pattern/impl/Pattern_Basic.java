@@ -25,3 +25,4 @@ public final class Pattern_Basic extends Pattern <ClassLabel_Basic> {
 		return str;
 	}
 }
+

@@ -5,6 +5,7 @@ python/
 doc/
 dataset/
 results/
+dataset_nodes/
 
 .DS_Store
 jMetal.log

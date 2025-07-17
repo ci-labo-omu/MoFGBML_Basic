@@ -1,6 +1,7 @@
 package cilabo.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,16 +12,17 @@ import cilabo.data.pattern.Pattern;
  * @param <pattern> データセットが扱うパターンクラスの型
  * @author Takigawa Hiroki
  */
-public class DataSet<pattern extends Pattern<?>> {
+public class DataSet<T extends Pattern<?>> {
 	/** Number of Patterns*/
 	private int DataSize;
 	/** Number of Features*/
 	private int Ndim;
 	/** Number of Classes*/
 	private int Cnum;
+	/** Density Count of Patterns*/
 
 	/**	データセットのPattern実装クラスの可変長配列 */
-	private ArrayList<pattern> patterns = new ArrayList<>();
+	private T[] patterns;
 
 	/** コンストラクタ
 	 * @param dataSize データセットのパターン数
@@ -34,14 +36,19 @@ public class DataSet<pattern extends Pattern<?>> {
 		DataSize = dataSize;
 		Ndim = ndim;
 		Cnum = cnum;
+		final T[] tempPatterns = (T[]) new Pattern[dataSize];
+		this.patterns = tempPatterns;
 	}
+	private int currentPatternIndex = 0;
 
 	/** このインスタンスが持つリストの最後に，指定されたパターン実装クラスを追加します。<br>
 	 * Appends pattern class to the end of the list that this instance has
 	 * @param pattern リストに追加されるパターン実装クラス．pattern class to be appended to the list */
-	public void addPattern(pattern pattern) {
-		this.patterns.add(pattern);
-	}
+    public void addPattern(T pattern) {
+        // 内部実装が変更された部分
+        this.patterns[currentPatternIndex] = pattern; // 配列に直接代入
+        currentPatternIndex++;
+    }
 
 	/**
 	 * このインスタンスが持つリスト内の指定された位置にあるパターン実装クラスを返します。<br>
@@ -49,8 +56,8 @@ public class DataSet<pattern extends Pattern<?>> {
 	 * @param index 返されるパターン実装クラスのインデックス．index of pattern class to return
 	 * @return リスト内の指定された位置にあるパターン実装クラス．pattern class at the specified position in the list
 	 */
-	public pattern getPattern(int index) {
-		return this.patterns.get(index);
+	public T getPattern(int index) {
+		return this.patterns[index];
 	}
 
 	/**
@@ -59,35 +66,40 @@ public class DataSet<pattern extends Pattern<?>> {
 	 * @param index 返されるパターン実装クラスのインデックス．index of pattern class to return
 	 * @return リスト内の指定された位置にあるパターン実装クラス．pattern class at the specified position in the list
 	 */
-	public pattern getPatternWithID(int index) {
-		List<pattern> list = this.patterns.stream()
-										.filter(p -> p.getID() == index)
-										.collect( Collectors.toList() );
-		return list.get(0);
+	// Option A: IDとインデックスが一致するなら、既存のgetPatternを呼び出す
+	public T getPatternWithID(int index) { // indexをIDと解釈
+	    // getPattern が既に範囲チェックをしているはず
+	    return this.getPattern(index);
 	}
 
 	/** このインスタンスが持つパターン実装クラスのリストを返します。<br>
 	 * Returns pattern class list that this instance has.
 	 * @return 返されるパターン実装クラスのリスト．list of pattern class to return
 	 */
-	public ArrayList<pattern> getPatterns(){
-		return this.patterns;
+	public List<T> getPatterns(){
+	    // 配列をリストに変換して返す
+	    return Arrays.asList(this.patterns); // ★ 配列を List に変換
+	    // もし変更可能なリストが必要なら：
+	    // return new ArrayList<>(Arrays.asList(this.patterns));
 	}
 
 	@Override
 	public String toString() {
-		if(this.patterns.size() == 0) {
-			return null;
-		}
-		String ln = System.lineSeparator();
-		// Header
-		String str = String.format("%d,%d,%d" + ln, this.DataSize, this.Ndim, this.Cnum);
-		// Patterns
-		for(int n = 0; n < this.patterns.size(); n++) {
-			Pattern<?> pattern = this.patterns.get(n);
-			str += pattern.toString() + ln;
-		}
-		return str;
+		// this.patterns は T[] なので、.size() や .get() は使えない
+	    // 代わりに .length や [] アクセス、または Arrays.toString() を使う
+	    if(this.patterns.length == 0) { // ★ .size() を .length に変更
+	        return null; // または "Empty DataSet" などの文字列
+	    }
+	    String ln = System.lineSeparator();
+	    // Header
+	    // DataSize はフィールドから取得
+	    String str = String.format("%d,%d,%d" + ln, this.DataSize, this.Ndim, this.Cnum); // ★ DataSize は this.dataSize に変更
+	    // Patterns
+	    for(int n = 0; n < this.patterns.length; n++) { // ★ .size() を .length に変更
+	        Pattern<?> pattern = this.patterns[n]; // ★ .get(n) を [] アクセスに変更
+	        str += pattern.toString() + ln;
+	    }
+	    return str;
 	}
 
 	/*Rowanがくれたデータセット分割メソッド*/

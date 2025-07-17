@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import cilabo.data.DataSet;
+import cilabo.data.pattern.impl.PatternDensity;
 import cilabo.data.pattern.impl.Pattern_Basic;
 import cilabo.fuzzy.rule.antecedent.Antecedent;
 import cilabo.fuzzy.rule.consequent.classLabel.impl.ClassLabel_Basic;
@@ -22,11 +23,11 @@ public final class MoFGBML_Learning implements ConsequentFactory <Consequent_Bas
 	protected double defaultLimit = 0;
 
 	/** 学習に用いるデータセット*/
-	protected DataSet<Pattern_Basic> train;
+	protected DataSet<PatternDensity> train;
 
 	/**コンストラクタ
 	 * @param train 生成時に用いる学習用データ */
-	public MoFGBML_Learning(DataSet<Pattern_Basic> train) {
+	public MoFGBML_Learning(DataSet<PatternDensity> train) {
 		this.train = train;
 	}
 
@@ -35,7 +36,6 @@ public final class MoFGBML_Learning implements ConsequentFactory <Consequent_Bas
 		double[] confidence = this.calcConfidence(antecedent, antecedentIndex);
 		ClassLabel_Basic classLabel = this.calcClassLabel(confidence);
 		RuleWeight_Basic ruleWeight = this.calcRuleWeight(classLabel, confidence, limit);
-
 		Consequent_Basic consequent = new Consequent_Basic(classLabel, ruleWeight);
 		return consequent;
 	}
@@ -55,28 +55,30 @@ public final class MoFGBML_Learning implements ConsequentFactory <Consequent_Bas
 		// 各クラスのパターンに対する適合度の総和
 		double[] sumCompatibleGradeForEachClass = new double[Cnum];
 
-		for(int c = 0; c < Cnum; c++) {
-			final Integer CLASSNUM = c;
-			Optional<Double> partSum = null;
-			try {
-				partSum = Parallel.getInstance().getLearningForkJoinPool().submit( () ->
-					train.getPatterns().parallelStream()
-						// 正解クラスが「CLASS == c」のパターンを抽出
-						.filter(pattern -> pattern.getTargetClass().equalsClassLabel(CLASSNUM))
-						// 各パターンの入力ベクトルを抽出
-						.map(pattern -> pattern.getAttributeVector())
-						// 各入力ベクトルとantecedentのcompatible gradeを計算
-						.map(attributeVector -> antecedent.getCompatibleGradeValue(antecedentIndex, attributeVector))
-						// compatible gradeを総和する
-						.reduce( (sum, grade) -> sum+grade)
-				).get();
-			}catch (InterruptedException | ExecutionException e) {
-				System.err.print(e);
-				throw new IllegalArgumentException(e + " @" + this.getClass().getSimpleName());
-			}
-			sumCompatibleGradeForEachClass[c] = partSum.orElse(0.0);
-		}
-
+	    for (int c = 0; c < Cnum; c++) {
+	        final Integer CLASSNUM = c; // ラムダ式内で利用するため final を宣言
+	        // Optional<Double> partSum = null;  <-- ここは宣言のまま、初期化は不要
+	        try {
+	            // submitがFuture<Double>を返すように、ラムダ式の戻り値をDoubleにする。
+	            // DoubleStream.sum() は double を返すので、それを Double に変換して Optional.of でラップ
+	            double calculatedSum = Parallel.getInstance().getLearningForkJoinPool().submit(() ->
+	                train.getPatterns().parallelStream()
+	                    // 正解クラスが「CLASS == c」のパターンを抽出
+	                    .filter(pattern -> pattern.getTargetClass().equalsClassLabel(CLASSNUM))
+	                    // 各パターンの入力ベクトルとantecedentのcompatible gradeを計算し、さらにdensityを乗算
+	                    .mapToDouble(pattern ->
+	                        antecedent.getCompatibleGradeValue(antecedentIndex, pattern.getAttributeVector()) *
+	                        pattern.getDensity()
+	                    )
+	                    // compatible grade と density の積を総和する
+	                    .sum()
+	            ).get(); // get() は Future<Double> から Double を取り出す
+	            sumCompatibleGradeForEachClass[c] = calculatedSum; // Double を直接格納
+	        } catch (InterruptedException | ExecutionException e) {
+	            System.err.print(e);
+	            throw new IllegalArgumentException(e + " @" + this.getClass().getSimpleName());
+	        }
+	    }
 		// 全パターンに対する適合度の総和
 		double allSum = Arrays.stream(sumCompatibleGradeForEachClass).sum();
 		if(allSum != 0) {

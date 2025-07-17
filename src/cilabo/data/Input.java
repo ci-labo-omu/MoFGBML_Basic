@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -66,7 +67,8 @@ public class Input {
 
 			AttributeVector inputVector = new AttributeVector(vector);
 			ClassLabel_Basic classLabel = new ClassLabel_Basic(C);
-
+			//int density = (int)line[data.getNdim() + 1];
+			
 			Pattern_Basic pattern = new Pattern_Basic(
 					id,
 					inputVector,
@@ -94,7 +96,7 @@ public class Input {
 		// Later second row are patterns
 		for(int n = 0; n < data.getDataSize(); n++) {
 			double[] line = lines.get(n);
-
+			int density = (int)line[data.getNdim() + 1];
 			int id = n;
 			double[] vector = new double[data.getNdim()];
 			Integer[] cVec = new Integer[data.getCnum()];
@@ -111,7 +113,8 @@ public class Input {
 			Pattern_MultiClass pattern = new Pattern_MultiClass(
 					id,
 					inputVector,
-					classLabel);
+					classLabel
+					);
 			data.addPattern(pattern);
 		}
 		return data;

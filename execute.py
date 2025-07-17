@@ -51,8 +51,8 @@ if __name__ == "__main__":
                 "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-Basic.jar", 
                 "algroithmID" : f"Basic\{Dataset}_Basic",
                 "parallelCores" : "6",
-                "experimentID" : f"trial{i}{j}",
-                "trainFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tra.dat",
+                "experimentID" : f"trial{i}{j}_art",
+                "trainFile" : f"dataset_nodes\\{Dataset}\\a{i}_{j}_{Dataset}_tra\\a{i}_{j}_{Dataset}_node35.csv",
                 "testFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tst.dat"} \
                 for i in range(3) for j in range(10)]
 

@@ -26,6 +26,8 @@ import cilabo.gbml.solution.michiganSolution.MichiganSolution.MichiganSolutionBu
 import cilabo.gbml.solution.michiganSolution.impl.MichiganSolution_Basic;
 import cilabo.gbml.solution.pittsburghSolution.impl.PittsburghSolution_Basic;
 
+
+//Density用に変更
 public class MakeTestObject {
 	DataSet<Pattern_Basic> train = null;
 	Parameters parameters = null;
@@ -51,7 +53,7 @@ public class MakeTestObject {
 
 	public DataSet<Pattern_Basic> getTrain() {
 		if(Objects.isNull(train)) {
-			String trainFileName = String.format("dataset/%s/a%d_%d_%s-10tra.dat", this.dataSetName, this.x, this.y, this.dataSetName);
+			String trainFileName = String.format("dataset_nodes/%s/a%d_%d_%s_tra/a%d_%d_%s_node30.csv", this.dataSetName, this.x, this.y, this.dataSetName, this.x, this.y, this.dataSetName);
 			String testFileName = String.format("dataset/%s/a%d_%d_%s-10tst.dat", this.dataSetName, this.x, this.y, this.dataSetName);
 			/* Load Dataset ======================== */
 			Input.loadTrainTestFiles_Basic(trainFileName, trainFileName);
