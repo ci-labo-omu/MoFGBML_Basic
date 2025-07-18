@@ -63,6 +63,30 @@ public class InputDensity {
         }
         return data;
     }
+    public static void loadTrainTestFiles_Basic(String trainFile, String testFile) {
+
+		/* Load Dataset ======================== */
+		if(Objects.isNull(DataSetManager.getInstance().getTrains())) {
+			throw new IllegalArgumentException("argument [trainFile] is null @" + "TrainTestDatasetManager.loadTrainTestFiles()");}
+		if(Objects.isNull(DataSetManager.getInstance().getTrains())) {
+			throw new IllegalArgumentException("argument [testFile] is null @" + "TrainTestDatasetManager.loadTrainTestFiles()");}
+
+		DataSet<PatternDensity> train = InputDensity.inputDataSet_WithDensity(trainFile);
+		DataSetManager.getInstance().addTrains(train);
+		Consts.DATA_SIZE = train.getDataSize();
+		Consts.ATTRIBUTE_NUMBER = train.getNdim();
+		Consts.CLASS_LABEL_NUMBER = train.getCnum();
+
+		DataSet<Pattern_Basic> test = Input.inputDataSet_Basic(testFile);
+		DataSetManager.getInstance().addTests(test);
+
+		if(Objects.isNull(DataSetManager.getInstance().getTrains())) {
+			throw new IllegalArgumentException("failed to initialise trains@TrainTestDatasetManager.loadTrainTestFiles()");}
+		else if(Objects.isNull(DataSetManager.getInstance().getTests())) {
+			throw new IllegalArgumentException("failed to initialise tests@TrainTestDatasetManager.loadTrainTestFiles()");}
+		return;
+	}
+
 
     // loadTrainTestFiles_WithDensity のようなヘルパーメソッドも必要であればここに追加
     // public static void loadTrainTestFiles_WithDensity(String trainFile, String testFile) { ... }

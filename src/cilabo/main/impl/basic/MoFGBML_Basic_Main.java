@@ -26,6 +26,7 @@ import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 import cilabo.data.DataSet;
 import cilabo.data.DataSetManager;
 import cilabo.data.Input;
+import cilabo.data.InputDensity;
 import cilabo.data.pattern.Pattern;
 import cilabo.data.pattern.impl.PatternDensity;
 import cilabo.data.pattern.impl.Pattern_Basic;
@@ -118,7 +119,7 @@ public class MoFGBML_Basic_Main {
 		JMetalRandom.getInstance().setSeed(Consts.RAND_SEED);
 
 		/* Load Dataset ======================== */
-		Input.loadTrainTestFiles_Basic(MoFGBML_Basic_CommandLineArgs.trainFile, MoFGBML_Basic_CommandLineArgs.testFile);
+		InputDensity.loadTrainTestFiles_Basic(MoFGBML_Basic_CommandLineArgs.trainFile, MoFGBML_Basic_CommandLineArgs.testFile);
 		DataSet<Pattern_Basic> test = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTests().get(0);
 		DataSet<PatternDensity> train = (DataSet<PatternDensity>) DataSetManager.getInstance().getTrains().get(0);
 
@@ -365,6 +366,7 @@ public class MoFGBML_Basic_Main {
 		    for(int k = 0; k < test.getDataSize(); k++) {
 				Pattern<?> pattern = test.getPattern(k);
 				MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
+				System.out.println("Winner Solution: " + winnerSolution);
 				ClassLabel<?> class_pred = winnerSolution.getClassLabel();
 		    }
 
