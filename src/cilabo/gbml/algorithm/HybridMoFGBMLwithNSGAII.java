@@ -35,15 +35,11 @@ import org.uma.jmetal.util.fileoutput.impl.DefaultFileOutputContext;
 import org.uma.jmetal.util.observable.Observable;
 import org.uma.jmetal.util.observable.ObservableEntity;
 import org.uma.jmetal.util.observable.impl.DefaultObservable;
-import org.w3c.dom.Element;
 
-import cilabo.fuzzy.knowledge.Knowledge;
 import cilabo.gbml.component.variation.CrossoverAndMutationAndPittsburghLearningVariation;
 import cilabo.gbml.problem.pittsburghFGBML_Problem.AbstractPittsburghFGBML;
 import cilabo.gbml.solution.pittsburghSolution.PittsburghSolution;
 import cilabo.util.fileoutput.PittsburghSolutionListOutput;
-import xml.XML_TagName;
-import xml.XML_manager;
 
 public class HybridMoFGBMLwithNSGAII <S extends PittsburghSolution<?>>
 	extends AbstractEvolutionaryAlgorithm<S, List<S>>
@@ -158,16 +154,6 @@ public class HybridMoFGBMLwithNSGAII <S extends PittsburghSolution<?>>
 		/* JMetal progress initialization */
 		initProgress();
 
-		Element population_ = XML_manager.getInstance().createElement(XML_TagName.population);
-		for(S solution: this.getResult()) {
-			XML_manager.getInstance().addElement(population_, solution.toElement());
-		}
-		Element generations_ = XML_manager.getInstance().createElement(XML_TagName.generations, XML_TagName.evaluation, String.valueOf(0));
-		//knowlwdge出力用
-		XML_manager.getInstance().addElement(generations_, Knowledge.getInstance().toElement());
-		XML_manager.getInstance().addElement(generations_, population_);
-    	XML_manager.getInstance().addElement(XML_manager.getInstance().getRoot(), generations_);
-
 		/* GA loop */
 		while(!isStoppingConditionReached()) {
 			/* 親個体選択 - Mating Selection */
@@ -278,20 +264,6 @@ public class HybridMoFGBMLwithNSGAII <S extends PittsburghSolution<?>>
                     .setVarFileOutputContext(new DefaultFileOutputContext(outputRootDir + sep + String.format("VARARC-%d.csv", evaluations), ","))
                     .print();
 	    	    }*/
-
-	    		Element population = XML_manager.getInstance().createElement(XML_TagName.population);
-
-	    		for(S solution: this.getResult()) {
-	    			Element pittsburghSolution = solution.toElement();
-	    			XML_manager.getInstance().addElement(population, pittsburghSolution);
-	    		}
-
-	    		Element generations = XML_manager.getInstance().createElement(XML_TagName.generations, XML_TagName.evaluation, String.valueOf(evaluations));
-
-	    		//knowlwdge出力用
-	    		XML_manager.getInstance().addElement(generations, Knowledge.getInstance().toElement());
-	    		XML_manager.getInstance().addElement(generations, population);
-		    	XML_manager.getInstance().addElement(XML_manager.getInstance().getRoot(), generations);
 	    	}
 	    }
 		else {
