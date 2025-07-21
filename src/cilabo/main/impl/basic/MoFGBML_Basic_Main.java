@@ -26,12 +26,9 @@ import org.uma.jmetal.util.pseudorandom.JMetalRandom;
 import cilabo.data.DataSet;
 import cilabo.data.DataSetManager;
 import cilabo.data.Input;
-<<<<<<< HEAD
 import cilabo.data.InputDensity;
 import cilabo.data.pattern.Pattern;
 import cilabo.data.pattern.impl.PatternDensity;
-=======
->>>>>>> refs/remotes/origin/main
 import cilabo.data.pattern.impl.Pattern_Basic;
 import cilabo.fuzzy.classifier.Classifier;
 import cilabo.fuzzy.classifier.classification.Classification;
@@ -41,6 +38,7 @@ import cilabo.fuzzy.knowledge.factory.HomoTriangleKnowledgeFactory;
 import cilabo.fuzzy.knowledge.membershipParams.Parameters;
 import cilabo.fuzzy.rule.Rule.RuleBuilder;
 import cilabo.fuzzy.rule.antecedent.factory.impl.HeuristicRuleGenerationMethod;
+import cilabo.fuzzy.rule.consequent.classLabel.ClassLabel;
 import cilabo.fuzzy.rule.consequent.factory.impl.MoFGBML_Learning;
 import cilabo.fuzzy.rule.impl.Rule_Basic;
 import cilabo.gbml.algorithm.HybridMoFGBMLwithNSGAII;
@@ -52,6 +50,7 @@ import cilabo.gbml.operator.crossover.PittsburghCrossover;
 import cilabo.gbml.operator.mutation.PittsburghMutation;
 import cilabo.gbml.problem.pittsburghFGBML_Problem.impl.PittsburghFGBML_Basic;
 import cilabo.gbml.solution.michiganSolution.AbstractMichiganSolution;
+import cilabo.gbml.solution.michiganSolution.MichiganSolution;
 import cilabo.gbml.solution.michiganSolution.MichiganSolution.MichiganSolutionBuilder;
 import cilabo.gbml.solution.michiganSolution.impl.MichiganSolution_Basic;
 import cilabo.gbml.solution.pittsburghSolution.impl.PittsburghSolution_Basic;
@@ -364,16 +363,12 @@ public class MoFGBML_Basic_Main {
 			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
 
-<<<<<<< HEAD
-		    for(int k = 0; k < test.getDataSize(); k++) {
+		    /*for(int k = 0; k < test.getDataSize(); k++) {
 				Pattern<?> pattern = test.getPattern(k);
 				MichiganSolution<?> winnerSolution = nonDominatedSolutions.get(i).classify(pattern);
-				System.out.println("Winner Solution: " + winnerSolution);
 				ClassLabel<?> class_pred = winnerSolution.getClassLabel();
-		    }
+		    }*/
 
-=======
->>>>>>> refs/remotes/origin/main
 	    	str = String.valueOf(i);
 	    	str += "," + errorRatetrain;
 	    	str += "," + NR;
