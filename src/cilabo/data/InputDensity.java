@@ -42,7 +42,7 @@ public class InputDensity {
         lines.remove(0);
 
         // Later second row are patterns
-        for(int n = 0; n < data.getDataSize(); n++) {
+        for(int n = 0; n < lines.size(); n++) {
             double[] line = lines.get(n);
 
             int id = n;

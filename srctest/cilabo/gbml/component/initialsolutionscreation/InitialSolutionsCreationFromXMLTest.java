@@ -12,6 +12,7 @@ import org.uma.jmetal.component.initialsolutioncreation.InitialSolutionsCreation
 import cilabo.MakeTestObject;
 import cilabo.data.DataSet;
 import cilabo.data.DataSetManager;
+import cilabo.data.pattern.impl.PatternDensity;
 import cilabo.data.pattern.impl.Pattern_Basic;
 import cilabo.fuzzy.classifier.Classifier;
 import cilabo.fuzzy.classifier.classification.Classification;
@@ -35,7 +36,7 @@ import xml.XML_reader;
 class InitialSolutionsCreationFromXMLTest {
 
 	private static XML_reader XML_reader;
-	private static DataSet<Pattern_Basic> train;
+	private static DataSet<PatternDensity> train;
 	private static InitialSolutionsCreation<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>
 		initialSolutionsCreation;
 	private static List<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> population;

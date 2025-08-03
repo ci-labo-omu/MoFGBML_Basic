@@ -147,7 +147,9 @@ public class MoFGBML_Basic_Main {
 	/**
 	 *
 	 */
-	public static void HybridStyleMoFGBML (DataSet<PatternDensity> train, DataSet<Pattern_Basic> test) {
+	public static void HybridStyleMoFGBML (DataSet<PatternDensity> train, DataSet<Pattern_Basic> test) {		
+		long startTime = System.nanoTime();
+
 		Random.getInstance().initRandom(2022);
 		String sep = File.separator;
 
@@ -453,8 +455,13 @@ public class MoFGBML_Basic_Main {
 	    	strARC += "," + errorRatetestARC;
 	    	strsARC.add(strARC);
 	    }
-	    String fileNameARC = Consts.EXPERIMENT_ID_DIR + sep + "resultsARC.csv";
+	    long endTime = System.nanoTime();
+		double duration = (endTime - startTime) / 1_000_000_000.0;
+	    String fileName_time = Consts.EXPERIMENT_ID_DIR + sep + "time.txt";
+		String fileNameARC = Consts.EXPERIMENT_ID_DIR + sep + "resultsARC.csv";
 	    Output.writeln(fileNameARC, strsARC, false);
+	    //下みたいに，duration単体で出力したい．Stringに変換するの？
+	    Output.writeln(fileName_time, String.valueOf(duration), false);
 
 		return;
 	}

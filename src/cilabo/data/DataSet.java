@@ -22,7 +22,7 @@ public class DataSet<T extends Pattern<?>> {
 	/** Density Count of Patterns*/
 
 	/**	データセットのPattern実装クラスの可変長配列 */
-	private T[] patterns;
+	private List<T> patterns;
 
 	/** コンストラクタ
 	 * @param dataSize データセットのパターン数
@@ -36,18 +36,18 @@ public class DataSet<T extends Pattern<?>> {
 		DataSize = dataSize;
 		Ndim = ndim;
 		Cnum = cnum;
-		final T[] tempPatterns = (T[]) new Pattern[dataSize];
-		this.patterns = tempPatterns;
+		this.patterns = new ArrayList<>(dataSize); // 可変長リストを初期化
 	}
-	private int currentPatternIndex = 0;
 
 	/** このインスタンスが持つリストの最後に，指定されたパターン実装クラスを追加します。<br>
 	 * Appends pattern class to the end of the list that this instance has
 	 * @param pattern リストに追加されるパターン実装クラス．pattern class to be appended to the list */
     public void addPattern(T pattern) {
-        // 内部実装が変更された部分
-        this.patterns[currentPatternIndex] = pattern; // 配列に直接代入
-        currentPatternIndex++;
+        if (pattern == null) {
+			throw new IllegalArgumentException("Pattern cannot be null");
+		}
+        this.patterns.add(pattern); // 可変長リストに追加
+        
     }
 
 	/**
@@ -57,7 +57,10 @@ public class DataSet<T extends Pattern<?>> {
 	 * @return リスト内の指定された位置にあるパターン実装クラス．pattern class at the specified position in the list
 	 */
 	public T getPattern(int index) {
-		return this.patterns[index];
+		if (index < 0 || index >= this.patterns.size()) {
+			throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + this.patterns.size());
+		}
+		return this.patterns.get(index); // 可変長リストから取得
 	}
 
 	/**
@@ -67,9 +70,9 @@ public class DataSet<T extends Pattern<?>> {
 	 * @return リスト内の指定された位置にあるパターン実装クラス．pattern class at the specified position in the list
 	 */
 	// Option A: IDとインデックスが一致するなら、既存のgetPatternを呼び出す
-	public T getPatternWithID(int index) { // indexをIDと解釈
+	public T getPatternWithID(int id) { // indexをIDと解釈
 	    // getPattern が既に範囲チェックをしているはず
-	    return this.getPattern(index);
+	    return this.patterns.get(id);
 	}
 
 	/** このインスタンスが持つパターン実装クラスのリストを返します。<br>
@@ -78,29 +81,27 @@ public class DataSet<T extends Pattern<?>> {
 	 */
 	public List<T> getPatterns(){
 	    // 配列をリストに変換して返す
-	    return Arrays.asList(this.patterns); // ★ 配列を List に変換
+	    return this.patterns; // ★ 配列を List に変換
 	    // もし変更可能なリストが必要なら：
 	    // return new ArrayList<>(Arrays.asList(this.patterns));
 	}
 
 	@Override
 	public String toString() {
-		// this.patterns は T[] なので、.size() や .get() は使えない
-	    // 代わりに .length や [] アクセス、または Arrays.toString() を使う
-	    if(this.patterns.length == 0) { // ★ .size() を .length に変更
-	        return null; // または "Empty DataSet" などの文字列
-	    }
-	    String ln = System.lineSeparator();
-	    // Header
-	    // DataSize はフィールドから取得
-	    String str = String.format("%d,%d,%d" + ln, this.DataSize, this.Ndim, this.Cnum); // ★ DataSize は this.dataSize に変更
-	    // Patterns
-	    for(int n = 0; n < this.patterns.length; n++) { // ★ .size() を .length に変更
-	        Pattern<?> pattern = this.patterns[n]; // ★ .get(n) を [] アクセスに変更
-	        str += pattern.toString() + ln;
-	    }
-	    return str;
-	}
+        // patterns.size() と patterns.get(n) を使用
+        if(this.patterns.isEmpty()) { // ★変更点: isEmpty() を使う
+            return null; // または "Empty DataSet"
+        }
+        String ln = System.lineSeparator();
+        // Header (initialDataSize は初期読み込み時の情報として使うが、getDataSize() が現在のパターン数)
+        String str = String.format("%d,%d,%d" + ln, this.getDataSize(), this.Ndim, this.Cnum); // ★変更点: getDataSize() を使用
+        // Patterns
+        for(int n = 0; n < this.patterns.size(); n++) { // ★変更点: patterns.size() を使用
+            Pattern<?> pattern = this.patterns.get(n); // ★変更点: patterns.get(n) を使用
+            str += pattern.toString() + ln;
+        }
+        return str;
+    }
 
 	/*Rowanがくれたデータセット分割メソッド*/
 	/*public DataSet<pattern> split(double split_rate){
@@ -136,7 +137,7 @@ public class DataSet<T extends Pattern<?>> {
 	 * @return 返されるデータセットのパターン数
 	 */
 	public int getDataSize() {
-		return this.DataSize;
+		return patterns.size(); // ★ patterns.size() を使用してパターン数を取得
 	}
 
 
