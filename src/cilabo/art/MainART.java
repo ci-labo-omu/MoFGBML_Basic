@@ -17,70 +17,42 @@ import cilabo.ghng.Sample;
 
 public class MainART {
 
-    // Helper class for data loading and normalization, similar to Python's numpy/sklearn
-	private static class DataHelper {
+    private static class DataHelper {
         public static List<double[]> loadRawDataAsList(String filePath) throws IOException, NumberFormatException {
             List<double[]> lines = new ArrayList<>();
-            System.out.println("Attempting to read raw data from file: " + filePath);
-
             try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
                 String line;
-                int lineNumber = 0;
-                String headerLine = reader.readLine(); 
-                if (headerLine != null) {
-                    System.out.println("Header line skipped: " + headerLine.trim());
-                    lineNumber++;
-                }
-
+                reader.readLine(); // ヘッダ行を読み飛ばす
                 while ((line = reader.readLine()) != null) {
-                    lineNumber++;
-                    if (line.trim().isEmpty() || line.trim().startsWith("#")) {
-                        continue;
-                    }
+                    if (line.trim().isEmpty() || line.trim().startsWith("#")) continue;
                     String[] parts = line.trim().split("\\s+|,"); 
                     List<String> validParts = new ArrayList<>();
-                    for(String part : parts) {
-                        if (!part.isEmpty()) {
-                            validParts.add(part);
-                        }
-                    }
-                    if (validParts.isEmpty()) {
-                        System.out.println("Warning: Line " + lineNumber + " contains no valid data, skipping.");
-                        continue;
-                    }
+                    for(String part : parts) { if (!part.isEmpty()) validParts.add(part); }
+                    if (validParts.isEmpty()) continue;
                     double[] values = new double[validParts.size()];
-                    for (int i = 0; i < validParts.size(); i++) {
-                        values[i] = Double.parseDouble(validParts.get(i));
-                    }
+                    for (int i = 0; i < validParts.size(); i++) values[i] = Double.parseDouble(validParts.get(i));
                     lines.add(values);
                 }
             }
-            System.out.printf("Finished reading file. %d data lines loaded into raw list.%n", lines.size());
             return lines;
         }
 
         public static List<Sample> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
             List<Sample> samples = new ArrayList<>();
-            if (rawLines.isEmpty()) {
-                return samples;
-            }
+            if (rawLines.isEmpty()) return samples;
             int numDims = rawLines.get(0).length - 1; 
-            if (numDims < 1) { 
-                throw new IllegalArgumentException("First data line has too few values to separate features and label.");
-            }
+            if (numDims < 1) throw new IllegalArgumentException("First data line has too few values to separate features and label.");
             for (int i = 0; i < rawLines.size(); i++) {
                 double[] line = rawLines.get(i);
                 if (line.length != numDims + 1) { 
                     System.err.println("Warning: Skipping raw line at index " + i + " with incorrect number of dimensions (expected " + (numDims + 1) + " but got " + line.length + ").");
                     continue;
                 }
-                
                 int label = (int) line[line.length - 1];
                 double[] features = new double[line.length - 1];
                 System.arraycopy(line, 0, features, 0, line.length - 1);
                 samples.add(new Sample(features, label));
             }
-            System.out.printf("Converted %d raw lines to Sample objects.%n", samples.size());
             return samples;
         }
 
@@ -91,88 +63,102 @@ public class MainART {
     }
 
     public static void main(String[] args) {
-        final int TRIAL = 1;
+        final int TRIAL = 1; 
 
-        // Load data from file
-        List<double[]> rawLines = new ArrayList<>(); 
-        try {
-            rawLines = DataHelper.loadRawDataAsList("dataset/vehicle/all_data.dat");
-            System.out.println("\n--- Content of rawLines (all data lines from file) ---");
-            for (int i = 0; i < rawLines.size(); i++) {
-                System.out.println("Line " + (i+1) + ": " + Arrays.toString(rawLines.get(i)));
-            }
-            System.out.println("--- End of rawLines content ---\n");
-
-        } catch (IOException | NumberFormatException e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-            return;
-        }
-        
-        List<Sample> allData = new ArrayList<>();
-        try {
-            allData = DataHelper.convertRawDataToSamples(rawLines);
-        } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-            return;
-        }
-
-
-        System.out.printf("Loaded %d samples from all_data.dat%n", allData.size());
-        
-        Map<Integer, Long> classCounts = allData.stream()
-            .collect(Collectors.groupingBy(s -> s.label, Collectors.counting()));
-        System.out.println("Samples per class: " + classCounts);
-        
-        MinMaxScaler scaler = new MinMaxScaler();
-        List<Sample> normalizedData = scaler.fitTransform(allData);
-
-        Map<Integer, List<Sample>> dataByClass = normalizedData.stream()
-            .collect(Collectors.groupingBy(s -> s.label));
-
-        double[] minCIMs = {0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75};
+        double[] minCIMs = {0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75};
         final int LAMBDA = 50;
+        final long SHUFFLE_SEED = 11; 
 
-        ARTNetTrainer trainer = new ARTNetTrainer(); // コンストラクタ引数なしに変更
-        ARTNetDataExporter exporter = new ARTNetDataExporter(); // コンストラクタ引数なしに変更
+        ARTNetTrainer trainer = new ARTNetTrainer();
+        ARTNetDataExporter exporter = new ARTNetDataExporter();
 
-        // 訓練結果を格納するためのMapのMap (minCIM -> classLabel -> ARTNetModel)
-        Map<Double, Map<Integer, ARTNetModel>> allTrainedModels = new HashMap<>();
+        System.out.println("--- Starting ARTNet Training for all 10-fold x 3 repetitions data ---");
 
+        // 出力ルートディレクトリ
+        String outputBaseDir = "output_data"; // 例: output_data/minCIM_XX/aN_M_vehicle_nodes_ART.csv
+
+        // minCIMs の外側ループを先に行う
         for (double minCIM : minCIMs) {
-            Map<Integer, ARTNetModel> modelsForThisMinCIM = new HashMap<>(); // このminCIMにおける全クラスのモデル
+            System.out.printf("\n=== Processing minCIM = %.2f ===\n", minCIM);
 
-            for (Map.Entry<Integer, List<Sample>> entry : dataByClass.entrySet()) {
-                int classLabel = entry.getKey();
-                List<Sample> classData = entry.getValue();
+            // このminCIMにおける全てのフォールドの結果を格納するマップ (今は直接ファイルに出すので不要だが、もし後でまとめたいなら使える)
+            // Map<String, Map<Integer, ARTNetModel>> modelsPerFoldForThisMinCIM = new HashMap<>();
 
-                System.out.printf("\n--- Training Class %d with minCIM=%.2f ---\n", classLabel, minCIM);
-                
-                // Shuffle data (Python script does this inside the loop)
-                List<Sample> shuffledData = DataHelper.shuffleData(classData, 11); // Seed 11
-                //shuffledDataの形状を表示
-                System.out.printf("  Shuffled data size for class %d: %d samples%n", classLabel, shuffledData.size());
-                ARTNetModel net = new ARTNetModel(LAMBDA, minCIM);
-                
-                long timeTrain = 0;
-                for (int trial = 0; trial < TRIAL; trial++) {
-                    System.out.printf("  Trial %d/%d%n", trial + 1, TRIAL);
+            // 3回の繰り返し (n)
+            for (int n = 0; n < 3; n++) {
+                // 10-fold (m)
+                for (int m = 0; m < 10; m++) {
+                    String baseFileName = String.format("a%d_%d_vehicle-10tra.dat", n, m);
+                    String filePath = "dataset/vehicle/" + baseFileName;
+
+                    System.out.printf("  Processing file: %s%n", filePath);
+
+                    List<double[]> rawLines;
+                    try {
+                        rawLines = DataHelper.loadRawDataAsList(filePath);
+                    } catch (IOException | NumberFormatException e) {
+                        System.err.printf("Error loading raw data from %s: %s%n", filePath, e.getMessage());
+                        e.printStackTrace();
+                        continue;
+                    }
                     
-                    long startTime = System.nanoTime();
-                    trainer.artClusteringTrain(net, shuffledData);
-                    timeTrain += System.nanoTime() - startTime;
+                    List<Sample> allData;
+                    try {
+                        allData = DataHelper.convertRawDataToSamples(rawLines);
+                    } catch (IllegalArgumentException e) {
+                        System.err.printf("Error converting raw data from %s to Samples: %s%n", filePath, e.getMessage());
+                        e.printStackTrace();
+                        continue;
+                    }
+
+                    // System.out.printf("  Loaded %d samples from %s%n", allData.size(), filePath); // デバッグ出力は控えめに
                     
-                    System.out.printf("   Num. Clusters: %d%n", net.numNodes);
-                    System.out.printf("  Processing Time: %.3f ms%n", timeTrain / 1_000_000.0);
+                    MinMaxScaler scaler = new MinMaxScaler();
+                    List<Sample> normalizedData = scaler.fitTransform(allData);
+
+                    // クラスごとに分割 (ARTNetはクラスごとに訓練するため)
+                    Map<Integer, List<Sample>> dataByClass = normalizedData.stream()
+                        .collect(Collectors.groupingBy(s -> s.label));
+
+                    // この特定のファイル(aN_M)内で、各クラスを訓練したモデルを格納
+                    Map<Integer, ARTNetModel> modelsForThisFile = new HashMap<>(); 
+
+                    for (Map.Entry<Integer, List<Sample>> entry : dataByClass.entrySet()) {
+                        int classLabel = entry.getKey();
+                        List<Sample> classData = entry.getValue();
+
+                        // System.out.printf("--- Training Class %d with minCIM=%.2f for %s ---\n", classLabel, minCIM, baseFileName); // デバッグ出力は控えめに
+                        
+                        List<Sample> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
+                        
+                        ARTNetModel net = new ARTNetModel(LAMBDA, minCIM);
+                        
+                        long timeTrain = 0;
+                        for (int trial = 0; trial < TRIAL; trial++) {
+                            long startTime = System.nanoTime();
+                            trainer.artClusteringTrain(net, shuffledData);
+                            timeTrain += System.nanoTime() - startTime;
+                        }
+                        
+                        System.out.printf("    minCIM=%.2f, Class %d: Num. Clusters: %d, Time: %.3f ms%n", 
+                                          minCIM, classLabel, net.numNodes, timeTrain / 1_000_000.0);
+                        
+                        modelsForThisFile.put(classLabel, net); // 訓練済みモデルを格納
+                    }
+
+                    // この特定のファイル(aN_M)の訓練が全て完了した後、ノードデータをエクスポート
+                    // 出力ファイル名: a{n}_{m}_vehicle_nodes_ART.csv (minCIMはフォルダ名になる)
+                    String outputFileNameSuffix = String.format("a%d_%d_vehicle_nodes_ART.csv", n, m);
+                    exporter.exportNodesForSingleFile(
+                        modelsForThisFile, 
+                        minCIM, // 現在のminCIMを渡す
+                        outputBaseDir, // ルート出力ディレクトリを渡す
+                        outputFileNameSuffix
+                    );
                 }
-                modelsForThisMinCIM.put(classLabel, net); // 訓練済みモデルを格納
             }
-            allTrainedModels.put(minCIM, modelsForThisMinCIM); // このminCIMの全クラスモデルを格納
         }
-
-        // 全てのminCIMとクラスの訓練が完了した後、ARTNetDataExporterを呼び出す
-        exporter.exportCombinedNodeDataByMinCIM(allTrainedModels, "dataset_nodes/vehicle", "vehicle_nodes_minCIM");
-        // 例: dataset_nodes/vehicle/vehicle_nodes_minCIM_10.csv, vehicle_nodes_minCIM_15.csv などが出力されます
+        System.out.println("\n--- All ARTNet Training and Export complete ---");
     }
 }
+

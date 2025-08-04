@@ -99,7 +99,7 @@ public class ARTNetTrainer {
         }
 
         if (exNodes.isEmpty()) {
-            System.out.println(">>> [DEBUG] No samples for sigma estimation. Returning default.");
+            //System.out.println(">>> [DEBUG] No samples for sigma estimation. Returning default.");
             return 1.0E-6;
         }
 
