@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import cilabo.data.Input;
-import cilabo.ghng.Sample;
+import cilabo.ghng.Pattern;
 
 public class MainART {
 
@@ -37,8 +37,8 @@ public class MainART {
             return lines;
         }
 
-        public static List<Sample> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
-            List<Sample> samples = new ArrayList<>();
+        public static List<Pattern> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
+            List<Pattern> samples = new ArrayList<>();
             if (rawLines.isEmpty()) return samples;
             int numDims = rawLines.get(0).length - 1; 
             if (numDims < 1) throw new IllegalArgumentException("First data line has too few values to separate features and label.");
@@ -51,12 +51,12 @@ public class MainART {
                 int label = (int) line[line.length - 1];
                 double[] features = new double[line.length - 1];
                 System.arraycopy(line, 0, features, 0, line.length - 1);
-                samples.add(new Sample(features, label));
+                samples.add(new Pattern(features, label));
             }
             return samples;
         }
 
-        public static List<Sample> shuffleData(List<Sample> samples, long seed) {
+        public static List<Pattern> shuffleData(List<Pattern> samples, long seed) {
             Collections.shuffle(samples, new Random(seed));
             return samples;
         }
@@ -75,7 +75,7 @@ public class MainART {
         System.out.println("--- Starting ARTNet Training for all 10-fold x 3 repetitions data ---");
 
         // 出力ルートディレクトリ
-        String outputBaseDir = "output_data"; // 例: output_data/minCIM_XX/aN_M_vehicle_nodes_ART.csv
+        String outputBaseDir = "dataset_nodes/"; // 例: output_data/minCIM_XX/aN_M_vehicle_nodes_ART.csv
 
         // minCIMs の外側ループを先に行う
         for (double minCIM : minCIMs) {
@@ -102,7 +102,7 @@ public class MainART {
                         continue;
                     }
                     
-                    List<Sample> allData;
+                    List<Pattern> allData;
                     try {
                         allData = DataHelper.convertRawDataToSamples(rawLines);
                     } catch (IllegalArgumentException e) {
@@ -114,22 +114,22 @@ public class MainART {
                     // System.out.printf("  Loaded %d samples from %s%n", allData.size(), filePath); // デバッグ出力は控えめに
                     
                     MinMaxScaler scaler = new MinMaxScaler();
-                    List<Sample> normalizedData = scaler.fitTransform(allData);
+                    List<Pattern> normalizedData = scaler.fitTransform(allData);
 
                     // クラスごとに分割 (ARTNetはクラスごとに訓練するため)
-                    Map<Integer, List<Sample>> dataByClass = normalizedData.stream()
+                    Map<Integer, List<Pattern>> dataByClass = normalizedData.stream()
                         .collect(Collectors.groupingBy(s -> s.label));
 
                     // この特定のファイル(aN_M)内で、各クラスを訓練したモデルを格納
                     Map<Integer, ARTNetModel> modelsForThisFile = new HashMap<>(); 
 
-                    for (Map.Entry<Integer, List<Sample>> entry : dataByClass.entrySet()) {
+                    for (Map.Entry<Integer, List<Pattern>> entry : dataByClass.entrySet()) {
                         int classLabel = entry.getKey();
-                        List<Sample> classData = entry.getValue();
+                        List<Pattern> classData = entry.getValue();
 
                         // System.out.printf("--- Training Class %d with minCIM=%.2f for %s ---\n", classLabel, minCIM, baseFileName); // デバッグ出力は控えめに
                         
-                        List<Sample> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
+                        List<Pattern> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
                         
                         ARTNetModel net = new ARTNetModel(LAMBDA, minCIM);
                         

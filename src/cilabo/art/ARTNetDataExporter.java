@@ -69,18 +69,14 @@ public class ARTNetDataExporter {
                 return; // 次元が取得できない場合はスキップ
             }
 
-            StringBuilder header = new StringBuilder();
-            for (int d = 0; d < dimension; d++) {
-                header.append("attr").append(d + 1).append(",");
-            }
-            header.append("class_label,wins_count");
-            writer.write(header.toString());
-            writer.newLine();
 
+            
+            Set<Integer> classLabels = new HashSet<>();
             // このminCIMにおける全クラスのノードを収集
             List<CollectedNodeInfo> allNodesForThisFile = new ArrayList<>();
             for (Map.Entry<Integer, ARTNetModel> classModelEntry : modelsForThisFile.entrySet()) {
                 int classLabel = classModelEntry.getKey();
+                classLabels.add(classLabel);
                 ARTNetModel model = classModelEntry.getValue();
 
                 if (model == null) {
@@ -96,7 +92,10 @@ public class ARTNetDataExporter {
                     }
                 }
             }
-
+            
+            
+            writer.write(String.format("%d,%d,%d", allNodesForThisFile.size(), dimension, classLabels.size()));
+            writer.newLine();
             // 収集した全てのノードをファイルに書き出す
             for (CollectedNodeInfo node : allNodesForThisFile) {
                 StringBuilder sb = new StringBuilder();

@@ -158,41 +158,7 @@ public class GHNGDataExporter {
      * @param classLabel ニューロンが訓練されたクラスラベル
      * @throws IOException
      */
-    private void writeOptimalLevelNeurons(GHNGModel model, BufferedWriter writer, int currentLevel, int targetLevel, int classLabel) throws IOException {
-        if (model == null) {
-            return;
-        }
 
-        // 現在のレベルがターゲットレベルと一致する場合、ニューロンを出力
-        if (currentLevel == targetLevel) {
-            Map<Integer, Integer> currentLevelWinCounts = trainer.calculateNeuronWinCounts(model);
-
-            for (int i = 0; i < model.maxUnits; i++) {
-                if (!Double.isNaN(model.means[0][i])) { // アクティブなニューロンのみ
-                    int winCount = currentLevelWinCounts.getOrDefault(i, 0);
-                    if (winCount > 0) { // 勝利回数が0より大きいもののみ出力
-                        StringBuilder line = new StringBuilder();
-                        // 座標 (属性値)
-                        for (int d = 0; d < model.means.length; d++) {
-                            line.append(model.means[d][i]).append(",");
-                        }
-                        // クラスラベル
-                        line.append(classLabel).append(",");
-                        // 勝利回数
-                        line.append(winCount);
-
-                        writer.write(line.toString());
-                        writer.newLine();
-                    }
-                }
-            }
-        } else if (currentLevel < targetLevel) { // 現在のレベルがターゲットレベルより低い場合、子モデルを深く探索
-            for (GHNGModel childModel : model.children.values()) {
-                writeOptimalLevelNeurons(childModel, writer, currentLevel + 1, targetLevel, classLabel);
-            }
-        }
-        // currentLevel > targetLevel の場合は何もしない（ターゲットレベルより深い階層は出力しない）
-    }
 
    public void saveGHNGModels(Map<Integer, GHNGModel> modelInfosByClass, String filePath) {
        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {

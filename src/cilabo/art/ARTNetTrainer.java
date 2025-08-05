@@ -2,24 +2,22 @@ package cilabo.art;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
-import cilabo.ghng.Sample;
+import cilabo.ghng.Pattern;
 
 public class ARTNetTrainer {
 
     public ARTNetTrainer() {}
 
-    public void artClusteringTrain(ARTNetModel model, List<Sample> data) {
-        List<Sample> originData = new ArrayList<>(data);
+    public void artClusteringTrain(ARTNetModel model, List<Pattern> data) {
+        List<Pattern> originData = new ArrayList<>(data);
 
         int lambda = model.lambda;
         double minCIM = model.minCIM;
 
         for (int sampleNum = 0; sampleNum < originData.size(); sampleNum++) {
-            Sample currentSample = originData.get(sampleNum);
+            Pattern currentSample = originData.get(sampleNum);
             double[] inputData = currentSample.features;
 
             double estSigCA;
@@ -87,8 +85,8 @@ public class ARTNetTrainer {
         }
     }
 
-    private double sigmaEstimation(List<Sample> data, int sampleNum, int lambda) {
-        List<Sample> exNodes;
+    private double sigmaEstimation(List<Pattern> data, int sampleNum, int lambda) {
+        List<Pattern> exNodes;
         int dataSize = data.size();
         if (dataSize < lambda) {
             exNodes = data;
@@ -108,12 +106,12 @@ public class ARTNetTrainer {
 
         for (int i = 0; i < d; i++) {
             double sum = 0;
-            for (Sample s : exNodes) {
+            for (Pattern s : exNodes) {
                 sum += s.features[i];
             }
             double mean = sum / exNodes.size();
             double sumSqDiff = 0;
-            for (Sample s : exNodes) {
+            for (Pattern s : exNodes) {
                 sumSqDiff += Math.pow(s.features[i] - mean, 2);
             }
             qStd[i] = Math.sqrt(sumSqDiff / exNodes.size());
