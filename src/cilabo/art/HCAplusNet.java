@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ARTNetModel implements Serializable {
+public class HCAplusNet implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public int numNodes;
@@ -16,7 +16,7 @@ public class ARTNetModel implements Serializable {
     public final int lambda;
     public final double minCIM;
 
-    public ARTNetModel(int lambda, double minCIM) {
+    public HCAplusNet(int lambda, double minCIM) {
         this.numNodes = 0;
         this.weights = new ArrayList<>();
         this.countNodes = new ArrayList<>();

@@ -14,7 +14,7 @@ public class Main {
     public static void main(String[] args) {
         // GHNG パラメータ設定 (省略せず、前回のコードからコピーしてください)
         int epochs = 20;
-        int maxNeurons = 500;
+        int maxNeurons = 1000;
         double tau = 0.01;
         int lambda = 50;
         double epsilonB = 0.05;
@@ -28,10 +28,10 @@ public class Main {
         GHNGTrainer trainer = new GHNGTrainer(4, 42); // 最大レベル4, 乱数シード42
         GHNGDataExporter exporter = new GHNGDataExporter(trainer);
 
-        List<Pattern> allTrainingSamples = new ArrayList<>();
-        
+        List<Sample> allTrainingSamples = new ArrayList<>();
+        String datasetName = "magic"; // データセット名を指定
         // ファイル読み込み部分を直接ここに記述
-        String fileName = "dataset/vehicle/all_data.dat"; // 正しいファイルパスであることを確認
+        String fileName = "dataset/%s/%s.dat".formatted(datasetName, datasetName); // 正しいファイルパスであることを確認
         System.out.println("Attempting to read file: " + fileName); // 読み込み開始メッセージ
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
@@ -82,7 +82,7 @@ public class Main {
                 double[] features = new double[values.length - 1];
                 System.arraycopy(values, 0, features, 0, values.length - 1);
                 
-                allTrainingSamples.add(new Pattern(features, label));
+                allTrainingSamples.add(new Sample(features, label));
             }
             System.out.printf("Loaded %d samples from %s%n", allTrainingSamples.size(), fileName);
 
@@ -109,24 +109,24 @@ public class Main {
                 System.out.println(allTrainingSamples.get(i));
             }
         } else { // データが少ない場合は全て表示
-             for (Pattern sample : allTrainingSamples) {
+             for (Sample sample : allTrainingSamples) {
                  System.out.println(sample);
              }
         }
 
 
         // ここからGHNG訓練の既存のロジック
-        Map<Integer, List<Pattern>> samplesByClass = allTrainingSamples.stream()
+        Map<Integer, List<Sample>> samplesByClass = allTrainingSamples.stream()
                 .collect(Collectors.groupingBy(s -> s.label));
 
         Map<Integer, GHNGModel> trainedModelsByClass = new HashMap<>();
 
         System.out.println("\n--- Starting Class-wise GHNG Training ---");
         long totalStartTime = System.nanoTime();
-
-        for (Map.Entry<Integer, List<Pattern>> entry : samplesByClass.entrySet()) {
+        
+        for (Map.Entry<Integer, List<Sample>> entry : samplesByClass.entrySet()) {
             int classLabel = entry.getKey();
-            List<Pattern> classSamples = entry.getValue();
+            List<Sample> classSamples = entry.getValue();
 
             if (classSamples.isEmpty()) {
                 System.out.printf("Skipping Class %d: No samples found.%n", classLabel);
@@ -162,7 +162,9 @@ public class Main {
 
         // 結果をCSVに出力
         System.out.println("\n--- Exporting GHNG Neurons by Level to CSV ---");
-        exporter.exportNeuronsByLevel(trainedModelsByClass, "ghng_mofgbml_patterns.csv");
+        //exporterに渡すとき，データセット名を入れる
+        
+        exporter.exportNeuronsByLevel(trainedModelsByClass, String.format("ghng_%s", datasetName));
         // オプション: モデルをシリアライズして保存
         //exporter.saveGHNGModels(trainedModelsByClass, "ghng_trained_models_by_class.ser");
     }

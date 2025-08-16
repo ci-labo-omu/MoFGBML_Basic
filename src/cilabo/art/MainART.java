@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import cilabo.data.Input;
-import cilabo.ghng.Pattern;
+import cilabo.ghng.Sample;
 
 public class MainART {
 
@@ -37,8 +37,8 @@ public class MainART {
             return lines;
         }
 
-        public static List<Pattern> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
-            List<Pattern> samples = new ArrayList<>();
+        public static List<Sample> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
+            List<Sample> samples = new ArrayList<>();
             if (rawLines.isEmpty()) return samples;
             int numDims = rawLines.get(0).length - 1; 
             if (numDims < 1) throw new IllegalArgumentException("First data line has too few values to separate features and label.");
@@ -51,12 +51,12 @@ public class MainART {
                 int label = (int) line[line.length - 1];
                 double[] features = new double[line.length - 1];
                 System.arraycopy(line, 0, features, 0, line.length - 1);
-                samples.add(new Pattern(features, label));
+                samples.add(new Sample(features, label));
             }
             return samples;
         }
 
-        public static List<Pattern> shuffleData(List<Pattern> samples, long seed) {
+        public static List<Sample> shuffleData(List<Sample> samples, long seed) {
             Collections.shuffle(samples, new Random(seed));
             return samples;
         }
@@ -74,9 +74,11 @@ public class MainART {
 
         System.out.println("--- Starting ARTNet Training for all 10-fold x 3 repetitions data ---");
 
+        
+        
+        String dataset = "shuttle"; // データセット名 (例: vehicle)
         // 出力ルートディレクトリ
-        String outputBaseDir = "dataset_nodes/"; // 例: output_data/minCIM_XX/aN_M_vehicle_nodes_ART.csv
-
+        String outputBaseDir = "dataset_nodes/%s".formatted(dataset); // 例: dataset_nodes/vehicle/minCIM_XX/aN_M_vehicle_nodes_ART.csv
         // minCIMs の外側ループを先に行う
         for (double minCIM : minCIMs) {
             System.out.printf("\n=== Processing minCIM = %.2f ===\n", minCIM);
@@ -88,8 +90,8 @@ public class MainART {
             for (int n = 0; n < 3; n++) {
                 // 10-fold (m)
                 for (int m = 0; m < 10; m++) {
-                    String baseFileName = String.format("a%d_%d_vehicle-10tra.dat", n, m);
-                    String filePath = "dataset/vehicle/" + baseFileName;
+                    String baseFileName = String.format("a%d_%d_%s-10tra.dat", n, m, dataset);
+                    String filePath = "dataset/%s/".formatted(dataset) + baseFileName;
 
                     System.out.printf("  Processing file: %s%n", filePath);
 
@@ -102,7 +104,7 @@ public class MainART {
                         continue;
                     }
                     
-                    List<Pattern> allData;
+                    List<Sample> allData;
                     try {
                         allData = DataHelper.convertRawDataToSamples(rawLines);
                     } catch (IllegalArgumentException e) {
@@ -114,24 +116,24 @@ public class MainART {
                     // System.out.printf("  Loaded %d samples from %s%n", allData.size(), filePath); // デバッグ出力は控えめに
                     
                     MinMaxScaler scaler = new MinMaxScaler();
-                    List<Pattern> normalizedData = scaler.fitTransform(allData);
+                    List<Sample> normalizedData = scaler.fitTransform(allData);
 
                     // クラスごとに分割 (ARTNetはクラスごとに訓練するため)
-                    Map<Integer, List<Pattern>> dataByClass = normalizedData.stream()
+                    Map<Integer, List<Sample>> dataByClass = normalizedData.stream()
                         .collect(Collectors.groupingBy(s -> s.label));
 
                     // この特定のファイル(aN_M)内で、各クラスを訓練したモデルを格納
-                    Map<Integer, ARTNetModel> modelsForThisFile = new HashMap<>(); 
+                    Map<Integer, HCAplusNet> modelsForThisFile = new HashMap<>(); 
 
-                    for (Map.Entry<Integer, List<Pattern>> entry : dataByClass.entrySet()) {
+                    for (Map.Entry<Integer, List<Sample>> entry : dataByClass.entrySet()) {
                         int classLabel = entry.getKey();
-                        List<Pattern> classData = entry.getValue();
+                        List<Sample> classData = entry.getValue();
 
                         // System.out.printf("--- Training Class %d with minCIM=%.2f for %s ---\n", classLabel, minCIM, baseFileName); // デバッグ出力は控えめに
                         
-                        List<Pattern> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
+                        List<Sample> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
                         
-                        ARTNetModel net = new ARTNetModel(LAMBDA, minCIM);
+                        HCAplusNet net = new HCAplusNet(LAMBDA, minCIM);
                         
                         long timeTrain = 0;
                         for (int trial = 0; trial < TRIAL; trial++) {
@@ -148,7 +150,7 @@ public class MainART {
 
                     // この特定のファイル(aN_M)の訓練が全て完了した後、ノードデータをエクスポート
                     // 出力ファイル名: a{n}_{m}_vehicle_nodes_ART.csv (minCIMはフォルダ名になる)
-                    String outputFileNameSuffix = String.format("a%d_%d_vehicle_nodes_ART.csv", n, m);
+                    String outputFileNameSuffix = String.format("a%d_%d_%s_nodes_ART.csv", n, m, dataset);
                     exporter.exportNodesForSingleFile(
                         modelsForThisFile, 
                         minCIM, // 現在のminCIMを渡す

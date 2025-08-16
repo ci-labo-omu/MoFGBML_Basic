@@ -40,7 +40,7 @@ public class ARTNetDataExporter {
      * @param filenameSuffix    ファイル名のサフィックス (例: "a0_0_vehicle_nodes_ART.csv")
      */
     public void exportNodesForSingleFile(
-            Map<Integer, ARTNetModel> modelsForThisFile,
+            Map<Integer, HCAplusNet> modelsForThisFile,
             double currentMinCIM,
             String baseDirPath,
             String filenameSuffix) {
@@ -58,7 +58,7 @@ public class ARTNetDataExporter {
             // ヘッダーの準備: 最初のモデルから次元数を取得
             int dimension = 0;
             if (!modelsForThisFile.isEmpty()) {
-                ARTNetModel firstModel = modelsForThisFile.values().iterator().next();
+                HCAplusNet firstModel = modelsForThisFile.values().iterator().next();
                 if (firstModel != null && !firstModel.weights.isEmpty()) {
                     dimension = firstModel.weights.get(0).length;
                 }
@@ -74,10 +74,10 @@ public class ARTNetDataExporter {
             Set<Integer> classLabels = new HashSet<>();
             // このminCIMにおける全クラスのノードを収集
             List<CollectedNodeInfo> allNodesForThisFile = new ArrayList<>();
-            for (Map.Entry<Integer, ARTNetModel> classModelEntry : modelsForThisFile.entrySet()) {
+            for (Map.Entry<Integer, HCAplusNet> classModelEntry : modelsForThisFile.entrySet()) {
                 int classLabel = classModelEntry.getKey();
                 classLabels.add(classLabel);
-                ARTNetModel model = classModelEntry.getValue();
+                HCAplusNet model = classModelEntry.getValue();
 
                 if (model == null) {
                     continue;

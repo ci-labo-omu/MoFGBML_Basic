@@ -4,20 +4,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import cilabo.ghng.Pattern;
+import cilabo.ghng.Sample;
 
 public class ARTNetTrainer {
 
     public ARTNetTrainer() {}
 
-    public void artClusteringTrain(ARTNetModel model, List<Pattern> data) {
-        List<Pattern> originData = new ArrayList<>(data);
+    public void artClusteringTrain(HCAplusNet model, List<Sample> data) {
+        List<Sample> originData = new ArrayList<>(data);
 
         int lambda = model.lambda;
         double minCIM = model.minCIM;
 
         for (int sampleNum = 0; sampleNum < originData.size(); sampleNum++) {
-            Pattern currentSample = originData.get(sampleNum);
+            Sample currentSample = originData.get(sampleNum);
             double[] inputData = currentSample.features;
 
             double estSigCA;
@@ -85,8 +85,8 @@ public class ARTNetTrainer {
         }
     }
 
-    private double sigmaEstimation(List<Pattern> data, int sampleNum, int lambda) {
-        List<Pattern> exNodes;
+    private double sigmaEstimation(List<Sample> data, int sampleNum, int lambda) {
+        List<Sample> exNodes;
         int dataSize = data.size();
         if (dataSize < lambda) {
             exNodes = data;
@@ -106,12 +106,12 @@ public class ARTNetTrainer {
 
         for (int i = 0; i < d; i++) {
             double sum = 0;
-            for (Pattern s : exNodes) {
+            for (Sample s : exNodes) {
                 sum += s.features[i];
             }
             double mean = sum / exNodes.size();
             double sumSqDiff = 0;
-            for (Pattern s : exNodes) {
+            for (Sample s : exNodes) {
                 sumSqDiff += Math.pow(s.features[i] - mean, 2);
             }
             qStd[i] = Math.sqrt(sumSqDiff / exNodes.size());
@@ -120,14 +120,14 @@ public class ARTNetTrainer {
             }
         }
 
-        System.out.printf(">>> [DEBUG] qStd = %s\n", Arrays.toString(qStd));
+        //System.out.printf(">>> [DEBUG] qStd = %s\n", Arrays.toString(qStd));
 
         double medianStd = median(qStd);
         double n = exNodes.size();
         double estSig = Math.pow(4 / (2.0 + d), 1.0 / (4.0 + d)) * medianStd * Math.pow(n, -1.0 / (4.0 + d));
 
-        System.out.printf(">>> [DEBUG] sigma = %.6e, d = %d, n = %d, median(qStd) = %.6e\n",
-            estSig, d, (int)n, medianStd);
+        //System.out.printf(">>> [DEBUG] sigma = %.6e, d = %d, n = %d, median(qStd) = %.6e\n",
+        //    estSig, d, (int)n, medianStd);
 
         return estSig;
     }

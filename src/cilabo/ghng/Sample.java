@@ -3,11 +3,11 @@ package cilabo.ghng;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class Pattern {
+public class Sample {
     public double[] features;
     public int label;
 
-    public Pattern(double[] features, int label) {
+    public Sample(double[] features, int label) {
         this.features = features;
         this.label = label;
     }
@@ -17,15 +17,15 @@ public class Pattern {
     }
 
     // ディープコピーメソッド
-    public Pattern copy() {
-        return new Pattern(Arrays.copyOf(this.features, this.features.length), this.label);
+    public Sample copy() {
+        return new Sample(Arrays.copyOf(this.features, this.features.length), this.label);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Pattern sample = (Pattern) o;
+        Sample sample = (Sample) o;
         return label == sample.label && Arrays.equals(features, sample.features);
     }
 
