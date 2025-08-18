@@ -21,11 +21,27 @@ public class MainHCAplus {
 
     // ARTNetのmainから抽出したDataHelperクラスをここに配置
     private static class DataHelper {
-        public static List<double[]> loadRawDataAsList(String filePath) throws IOException, NumberFormatException {
+    	public static DataLoadResult loadRawDataAsList(String filePath) throws IOException, NumberFormatException {
             List<double[]> lines = new ArrayList<>();
+            int numSamples = 0;
+            int numDims = 0;
+            int numClasses = 0;
+
             try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+                String headerLine = reader.readLine();
+                if (headerLine == null) {
+                    throw new IOException("File is empty.");
+                }
+                
+                // ヘッダ行を解析
+                String[] headerParts = headerLine.trim().split("\\s+|,");
+                if (headerParts.length >= 3) {
+                    numSamples = Integer.parseInt(headerParts[0]);
+                    numDims = Integer.parseInt(headerParts[1]);
+                    numClasses = Integer.parseInt(headerParts[2]);
+                }
+
                 String line;
-                reader.readLine(); // ヘッダ行を読み飛ばす
                 while ((line = reader.readLine()) != null) {
                     if (line.trim().isEmpty() || line.trim().startsWith("#")) continue;
                     String[] parts = line.trim().split("\\s+|,"); 
@@ -37,10 +53,12 @@ public class MainHCAplus {
                     lines.add(values);
                 }
             }
-            return lines;
+            
+            // ヘッダ情報とデータを一緒に返す
+            return new DataLoadResult(numSamples, numDims, numClasses, lines);
         }
 
-        public static List<Sample> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
+    	public static List<Sample> convertRawDataToSamples(List<double[]> rawLines) throws IllegalArgumentException {
             List<Sample> samples = new ArrayList<>();
             if (rawLines.isEmpty()) return samples;
             int numDims = rawLines.get(0).length - 1; 
@@ -70,7 +88,6 @@ public class MainHCAplus {
         final int Epochs = 1;
         final int MaxLevel = 10;
         final long SHUFFLE_SEED = 1; // main_HCAplus.m の rng(1) に対応
-        final int MaxLabel = 4; // vehicle データセットのクラス数
 
         String dataset = "vehicle";
         String outputBaseDir = String.format("dataset_nodes/%s", dataset);
@@ -88,32 +105,38 @@ public class MainHCAplus {
 
                 System.out.printf("\nProcessing file: %s%n", filePath);
 
-                List<double[]> rawLines;
+                DataLoadResult dataResult;
                 try {
-                    rawLines = DataHelper.loadRawDataAsList(filePath);
+                    dataResult = DataHelper.loadRawDataAsList(filePath);
                 } catch (IOException | NumberFormatException e) {
                     System.err.printf("Error loading raw data from %s: %s%n", filePath, e.getMessage());
                     e.printStackTrace();
                     continue;
                 }
                 
+                // ヘッダ情報から取得
+                int numSamplesInHeader = dataResult.numSamples;
+                int numDimsInHeader = dataResult.numDims;
+                int numClass = dataResult.numClasses;
+                
+                // データ行をSampleオブジェクトに変換
                 List<Sample> allData;
                 try {
-                    allData = DataHelper.convertRawDataToSamples(rawLines);
+                    allData = DataHelper.convertRawDataToSamples(dataResult.dataLines);
                 } catch (IllegalArgumentException e) {
                     System.err.printf("Error converting raw data from %s to Samples: %s%n", filePath, e.getMessage());
                     e.printStackTrace();
                     continue;
                 }
-
+                System.out.printf("  Header: Samples=%d, Dimensions=%d, Classes=%d%n", numSamplesInHeader, numDimsInHeader, numClass);
                 System.out.printf("  Loaded %d samples from %s%n", allData.size(), filePath);
                 
                 // データをシャッフル (Python main_HCAplus.mのrng(1)とrandpermに対応)
                 List<Sample> shuffledData = DataHelper.shuffleData(allData, SHUFFLE_SEED);
 
                 // HCAplusNetの初期化
-                HCAplusNet net = new HCAplusNet(shuffledData.get(0).features.length, shuffledData.size(), MaxLabel, MaxLevel, Epochs);
-                
+                HCAplusNet net = new HCAplusNet(shuffledData.get(0).features.length, shuffledData.size(), numClass, MaxLevel, Epochs);
+                //shuffledDataの中身を見る
                 // 訓練
                 long startTime = System.nanoTime();
                 HCAplusNet trainedNet = trainer.trainHCAplus(
@@ -121,7 +144,7 @@ public class MainHCAplus {
                     net, 
                     1, // レベル1から開始
                     convertSamplesToLabels(shuffledData), 
-                    MaxLabel
+                    numClass
                 );
                 long endTime = System.nanoTime();
                 
@@ -155,6 +178,7 @@ public class MainHCAplus {
     }
 
     private static int[] convertSamplesToLabels(List<Sample> samples) {
-        return samples.stream().mapToInt(s -> s.label).toArray();
+		// ラベルをintの配列に変換
+    	return samples.stream().mapToInt(s -> s.label).toArray();
     }
 }
