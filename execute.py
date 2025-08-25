@@ -34,7 +34,7 @@ def detection_async_parallel(_requests):
     return results"""
     results = []
     
-    with ThreadPoolExecutor(max_workers=2) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         for result in executor.map(detection_async, _requests):
             results.append(result)
             
@@ -43,14 +43,13 @@ def detection_async_parallel(_requests):
 
 if __name__ == "__main__":
     Dataset = "vehicle"
-    time.sleep(3600)
     requests = [{"trial" : f"{i}_{j}",
                 "dataset" : Dataset ,
                 
                 
                 "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-Basic.jar", 
                 "algroithmID" : f"Basic\{Dataset}_Basic",
-                "parallelCores" : "4",
+                "parallelCores" : "6",
                 "experimentID" : f"trial{i}{j}_art10",
                 "trainFile" : f"dataset_nodes\\{Dataset}\\minCIM_10\\a{i}_{j}_{Dataset}_nodes_ART.csv",
                 "testFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tst.dat"} \
