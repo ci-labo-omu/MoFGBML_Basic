@@ -42,14 +42,14 @@ def detection_async_parallel(_requests):
 
 
 if __name__ == "__main__":
-    Dataset = "satimage"
+    Dataset = "vehicle"
     #time.sleep(8000)
     requests = [{"trial" : f"{i}_{j}",
                 "dataset" : Dataset, 
                 
                 
                 "jarFile" : "target\MoFGBML-23.0.0-SNAPSHOT-Basic.jar", 
-                "algroithmID" : f"Basic\{Dataset}_Basic",
+                "algroithmID" : f"Basic\\{Dataset}_Basic_DC03",
                 "parallelCores" : "6",
                 "experimentID" : f"trial{i}{j}",
                 "trainFile" : f"dataset\\{Dataset}\\a{i}_{j}_{Dataset}-10tra.dat",
