@@ -44,7 +44,6 @@ public final class HeuristicRuleGenerationMethod implements AntecedentIndexFacto
 	 */
 	public int[] calculateAntecedentPart(Pattern<?> pattern) {
 		double[] vector = pattern.getAttributeVector().getAttributeArray();
-
 		//Don't careの決定
 		double dcRate;
 		if(Consts.IS_PROBABILITY_DONT_CARE) {
@@ -54,7 +53,8 @@ public final class HeuristicRuleGenerationMethod implements AntecedentIndexFacto
 		else {
 			// (Ndim - const) / Ndim
 			//dcRate = Math.max((dimension - Consts.ANTECEDENT_NUMBER_DO_NOT_DONT_CARE) / (double)dimension, Consts.DONT_CARE_RT);
-			dcRate = (dimension - 3) / (double)dimension;
+			//dcRate = (dimension - 3) / (double)dimension;
+			dcRate = Consts.DONT_CARE_RT;
 		}
 
 		int[] antecedentIndex = new int[dimension];
@@ -96,6 +96,7 @@ public final class HeuristicRuleGenerationMethod implements AntecedentIndexFacto
 
 	@Override
 	public int[] create() {
+
 		int patternIndex = Random.getInstance().getGEN().nextInt(this.dataSize);
 
 		int[] antecedentIndex = this.selectAntecedentPart(patternIndex);

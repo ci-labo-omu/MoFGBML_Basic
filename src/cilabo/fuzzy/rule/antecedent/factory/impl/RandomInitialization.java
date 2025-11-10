@@ -34,7 +34,10 @@ public final class RandomInitialization implements AntecedentIndexFactory{
 	@Override
 	public int[] create() {
 		double dcRate;
+		System.out.println("Creating antecedent by Random Initialization in RandomInitialization...");
+		System.out.println(Consts.DONT_CARE_RT);
 		if(Consts.IS_PROBABILITY_DONT_CARE) {
+			System.out.println("Probability Value");
 			// Constant Value
 			dcRate = Consts.DONT_CARE_RT;
 		}
@@ -70,6 +73,7 @@ public final class RandomInitialization implements AntecedentIndexFactory{
 
 	@Override
 	public int[][] create(int numberOfGenerateRule) {
+		System.out.println("Creating antecedents by Random Initialization in RandomInitialization...");
 		int[][] antecedentIndexArray = new int[numberOfGenerateRule][this.dimension];
 		for(int i=0; i<numberOfGenerateRule; i++) {
 			antecedentIndexArray[i] = this.create();
