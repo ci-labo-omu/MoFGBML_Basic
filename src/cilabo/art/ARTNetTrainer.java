@@ -7,7 +7,7 @@ import java.util.List;
 import cilabo.ghng.Sample;
 
 public class ARTNetTrainer {
-
+	
     public ARTNetTrainer() {}
 
     public void artClusteringTrain(HCAplusNet model, List<Sample> data) {
@@ -15,11 +15,12 @@ public class ARTNetTrainer {
 
         int lambda = model.lambda;
         double minCIM = model.minCIM;
-
+        model.winners.clear();
+        
         for (int sampleNum = 0; sampleNum < originData.size(); sampleNum++) {
             Sample currentSample = originData.get(sampleNum);
             double[] inputData = currentSample.features;
-
+            int winnerIndex = -1;
             double estSigCA;
             if (model.weights.isEmpty() || sampleNum % lambda == 0) {
                 estSigCA = sigmaEstimation(originData, sampleNum, lambda);
@@ -27,13 +28,13 @@ public class ARTNetTrainer {
                 estSigCA = mean(model.adaptiveSigs);
                 if (estSigCA == 0.0) estSigCA = 1.0E-6;
             }
-            
             if (model.weights.isEmpty()) {
                 model.numNodes++;
                 model.weights.add(Arrays.copyOf(inputData, inputData.length));
                 model.countNodes.add(1);
                 model.adaptiveSigs.add(estSigCA);
                 model.labelClusters.add(currentSample.label);
+                winnerIndex = model.numNodes;
             } else {
                 double[] globalCIM = cim(inputData, model.weights, estSigCA);
 
@@ -57,33 +58,41 @@ public class ARTNetTrainer {
                         }
                     }
                 }
-
+                
                 if (minCIM < Lcim_s1) {
                     model.numNodes++;
                     model.weights.add(Arrays.copyOf(inputData, inputData.length));
                     model.countNodes.add(1);
                     model.adaptiveSigs.add(estSigCA);
                     model.labelClusters.add(currentSample.label);
+                    winnerIndex = model.numNodes;
                 } else {
                     int countS1 = model.countNodes.get(s1) + 1;
                     model.countNodes.set(s1, countS1);
                     double[] weightS1 = model.weights.get(s1);
                     for (int i = 0; i < weightS1.length; i++) {
-                        weightS1[i] += (1.0 / (10.0 * countS1)) * (inputData[i] - weightS1[i]);
+                        weightS1[i] += (1.0 / countS1) * (inputData[i] - weightS1[i]);
                     }
 
                     if (minCIM >= Lcim_s2 && s2 != -1) {
-                        int countS2 = model.countNodes.get(s2) + 1;
-                        model.countNodes.set(s2, countS2);
+                        int countS2 = model.countNodes.get(s2);
+                        //model.countNodes.set(s2, countS2);
                         double[] weightS2 = model.weights.get(s2);
                         for (int i = 0; i < weightS2.length; i++) {
                             weightS2[i] += (1.0 / (100.0 * countS2)) * (inputData[i] - weightS2[i]);
                         }
                     }
+                    winnerIndex = s1 + 1;
                 }
             }
+            if (winnerIndex != -1) {
+        		model.winners.add(winnerIndex);
+        	} else {
+        		System.err.println("Error: Winner index was not assigned properly.");
+        	}
         }
     }
+    
 
     private double sigmaEstimation(List<Sample> data, int sampleNum, int lambda) {
         List<Sample> exNodes;

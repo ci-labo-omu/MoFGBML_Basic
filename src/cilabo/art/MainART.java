@@ -76,7 +76,7 @@ public class MainART {
 
         
         
-        String dataset = "shuttle"; // データセット名 (例: vehicle)
+        String dataset = "banknote"; // データセット名 (例: vehicle)
         // 出力ルートディレクトリ
         String outputBaseDir = "dataset_nodes/%s".formatted(dataset); // 例: dataset_nodes/vehicle/minCIM_XX/aN_M_vehicle_nodes_ART.csv
         // minCIMs の外側ループを先に行う
@@ -133,8 +133,7 @@ public class MainART {
                         
                         List<Sample> shuffledData = DataHelper.shuffleData(classData, SHUFFLE_SEED); 
                         
-                        HCAplusNet net = new HCAplusNet(LAMBDA, minCIM);
-                        
+                        HCAplusNet net = new HCAplusNet(LAMBDA, minCIM, 1); // maxlevel=1 でART相当
                         long timeTrain = 0;
                         for (int trial = 0; trial < TRIAL; trial++) {
                             long startTime = System.nanoTime();

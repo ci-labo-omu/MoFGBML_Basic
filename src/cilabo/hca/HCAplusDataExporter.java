@@ -1,231 +1,120 @@
 package cilabo.hca;
+
+import cilabo.art.HCAplusNet;
+
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
+/**
+ * HCA+ネットワークのノード情報とツリー構造の統計をエクスポートするユーティリティクラス。
+ * MATLABのGenerateExcelFromRecordALL.mや、階層レベルごとのCSV出力の要件を処理します。
+ */
 public class HCAplusDataExporter {
-    
-    public int countNumNodes(HCAplusNet net) {
-        if (net == null) {
-            return 0;
-        }
 
-        int count = net.numNodes;
-        
-        Queue<HCAplusNet> queue = new LinkedList<>();
-        for (HCAplusNet child : net.Child.values()) {
-            queue.add(child);
-        }
-        
-        while (!queue.isEmpty()) {
-            HCAplusNet currentModel = queue.poll();
-            count += currentModel.numNodes;
-            
-            for (HCAplusNet child : currentModel.Child.values()) {
-                queue.add(child);
-            }
-        }
-        return count;
+    private final String outputBaseDir;
+
+    public HCAplusDataExporter(String outputBaseDir) {
+        this.outputBaseDir = outputBaseDir;
     }
-    public void exportLeavesNet(HCAplusNet hcaNet, String filePath, int numClasses) {
-        if (hcaNet == null) {
-            System.err.println("Error: Input HCAplusNet model is null.");
-            return;
-        }
 
-        List<LeafNodeInfo> leaves = new ArrayList<>();
-        collectLeavesRecursive(hcaNet, leaves);
+    /**
+     * HCA+の特定のレベルにおけるノード情報（座標、代表クラス、勝利回数）をCSVファイルに出力します。
+     * 出力構造は `baseDirPath/filename_suffix.csv` となります。
+     *
+     * @param currentModel HCA+の特定の階層レベルのモデル
+     * @param filePrefix ファイル名のプレフィックス (例: "aN_M_dataset")
+     */
+    public void exportNodesForHCAplusLevel(HCAplusNet currentModel, String filePrefix) {
 
-        if (leaves.isEmpty()) {
-            System.out.println("Warning: No leaf nodes found in the model. Skipping export.");
-            return;
+        // minCIMごとのサブディレクトリを作成
+        String minCIMSubDirPath = this.outputBaseDir + File.separator + 
+                                  String.format("minCIM_%d", (int)(currentModel.minCIM * 100));
+        String outputFileName = String.format("%s_level%d_nodes_HCAplus.csv", filePrefix, currentModel.level);
+        String filePath = minCIMSubDirPath + File.separator + outputFileName;
+
+        File dir = new File(minCIMSubDirPath);
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            // ヘッダ行: パターン数, 属性数, クラス数
-            int numLeaves = leaves.size();
-            int numDims = leaves.get(0).weight.length;
-            writer.write(String.format("%d,%d,%d", numLeaves, numDims, numClasses));
+            int numNodes = currentModel.numNodes;
+            int dimension = currentModel.weights.isEmpty() ? 0 : currentModel.weights.get(0).length;
+            
+            if (dimension == 0) {
+                System.out.printf("Warning: No dimensions found for HCA+ level %d. Skipping export.%n", currentModel.level);
+                return;
+            }
+            
+            // 最大クラスラベル数を取得 (CountLabelMatrixの列サイズ-1)
+            int maxLabel = 0;
+            if (!currentModel.countLabelMatrix.isEmpty()) {
+                maxLabel = currentModel.countLabelMatrix.get(0).length - 1; 
+            }
+
+            // ヘッダー: ノード数, 次元数, クラスラベルの数
+            writer.write(String.format("%d,%d,%d", numNodes, dimension, maxLabel)); 
             writer.newLine();
 
-            // データ行: 属性, クラス, 密度情報
-            for (LeafNodeInfo leaf : leaves) {
-                StringBuilder line = new StringBuilder();
-                // 属性
-                for (double feature : leaf.weight) {
-                    line.append(feature).append(",");
+            // ノードデータ本体の書き出し
+            for (int i = 0; i < numNodes; i++) {
+                double[] position = currentModel.weights.get(i);
+                // model.labelClustersは、CA+トレーニングの最後に決定された代表クラスです
+                int classLabel = currentModel.labelClusters.get(i); 
+                int count = currentModel.countNodes.get(i);        
+                
+                StringBuilder sb = new StringBuilder();
+                // 属性値（重心座標）
+                for (int j = 0; j < position.length; j++) {
+                    sb.append(position[j]);
+                    sb.append(',');
                 }
-                // クラス
-                line.append(leaf.label).append(",");
-                // 密度情報
-                line.append(leaf.density);
-                writer.write(line.toString());
+                // クラスラベル, 勝利回数
+                sb.append(classLabel).append(',');
+                sb.append(count);
+                writer.write(sb.toString());
                 writer.newLine();
             }
-            System.out.printf("Exported %d leaf nodes to %s.%n", numLeaves, filePath);
+            //System.out.printf("  Exported %d nodes for Level %d to %s%n", numNodes, currentModel.level, filePath);
 
         } catch (IOException e) {
-            System.err.printf("Error exporting leaf nodes to %s: %s%n", filePath, e.getMessage());
+            System.err.printf("Error exporting HCA+ nodes to %s: %s%n", filePath, e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
-     * HCA+モデルを再帰的に探索し、葉ノードを収集するヘルパーメソッド。
-     * * @param model 現在の階層のモデル
-     * @param leaves 収集した葉ノードを格納するリスト
+     * HCA+ツリー内の全ノード数をカウントします (MATLAB: CountNumNodes.mの目的に沿って)。
+     * @param net ルートネットワークモデル
+     * @return ツリー内のノード総数
      */
-    private void collectLeavesRecursive(HCAplusNet model, List<LeafNodeInfo> leaves) {
-        if (model == null) {
-            return;
-        }
+    public int countAllNodes(HCAplusNet net) {
+        if (net == null) return 0;
 
-        // Childマップが空、または子モデルがすべてnullの場合、現在のモデルのノードが葉ノード
-        if (model.Child == null || model.Child.isEmpty() || model.Child.values().stream().allMatch(c -> c == null)) {
-            // 現在のモデルのノードを葉ノードとして収集
-            for (int i = 0; i < model.numNodes; i++) {
-                // 有効なノードのみを対象
-                if (model.CountNode != null && i < model.CountNode.length && model.CountNode[i] > 0) {
-                    // クラスラベルはCountLabelから多数決で決定
-                    int classLabel = -1;
-                    int maxCount = -1;
-                    if (model.CountLabel != null && i < model.CountLabel.length) {
-                        for (int j = 0; j < model.CountLabel[i].length; j++) {
-                            if (model.CountLabel[i][j] > maxCount) {
-                                maxCount = model.CountLabel[i][j];
-                                classLabel = j;
-                            }
-                        }
-                    }
-
-                    if (classLabel != -1) {
-                         leaves.add(new LeafNodeInfo(model.weight[i], classLabel, model.CountNode[i]));
-                    }
-                }
-            }
-        } else {
-            // 子モデルが存在する場合、再帰的に探索
-            for (HCAplusNet childModel : model.Child.values()) {
-                collectLeavesRecursive(childModel, leaves);
-            }
-        }
-    }
-
-    /**
-     * 葉ノードの情報を格納するためのヘルパークラス。
-     */
-    private static class LeafNodeInfo {
-        double[] weight;
-        int label;
-        int density;
-
-        public LeafNodeInfo(double[] weight, int label, int density) {
-            this.weight = weight;
-            this.label = label;
-            this.density = density;
-        }
-    }
-    
-    /**
-     * HCA+モデルの全階層のニューロンを抽出し、レベルごとに個別のファイルに出力します。
-     * @param hcaNet HCA+の訓練済みモデル
-     * @param baseFilePath 出力ファイルパスのベース名
-     * @param numClasses クラスの総数
-     */
-    public void exportAllLevels(HCAplusNet hcaNet, String baseFilePath, int numClasses) {
-        System.out.println("\n--- Exporting neurons for all levels ---");
+        int totalNodes = 0;
+        Queue<HCAplusNet> queue = new LinkedList<>();
+        queue.add(net); 
         
-        // 全レベルのニューロンを一時的に格納するマップ (Level -> List of NeuronInfo)
-        Map<Integer, List<LeafNodeInfo>> neuronsByLevel = new HashMap<>();
-        
-        collectNeuronsPerLevelRecursive(hcaNet, 0, neuronsByLevel, numClasses);
-        
-        // レベルごとにCSVファイルに出力
-        for (Map.Entry<Integer, List<LeafNodeInfo>> entry : neuronsByLevel.entrySet()) {
-            int level = entry.getKey();
-            List<LeafNodeInfo> neurons = entry.getValue();
+        while (!queue.isEmpty()) {
+            HCAplusNet currentModel = queue.remove();
             
-            String filePath = String.format("%s_level%d.csv", baseFilePath, level);
+            // このHCAplusNetオブジェクトが持つノードの数を加算
+            totalNodes += currentModel.numNodes; 
             
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-                if (neurons.isEmpty()) {
-                    System.out.printf("  Level %d has no neurons. Skipping file %s%n", level, filePath);
-                    continue;
-                }
-                
-                // ヘッダ行
-                int numDims = neurons.get(0).weight.length;
-                writer.write(String.format("%d,%d,%d", neurons.size(), numDims, numClasses));
-                writer.newLine();
-
-                // データ行
-                for (LeafNodeInfo neuron : neurons) {
-                    StringBuilder line = new StringBuilder();
-                    for (double feature : neuron.weight) {
-                        line.append(feature).append(",");
-                    }
-                    line.append(neuron.label).append(",");
-                    line.append(neuron.density);
-                    writer.write(line.toString());
-                    writer.newLine();
-                }
-                System.out.printf("  Exported %d neurons for Level %d to %s%n", neurons.size(), level, filePath);
-            } catch (IOException e) {
-                System.err.printf("Error exporting neurons for Level %d: %s%n", level, e.getMessage());
-                e.printStackTrace();
+            // 子ノードをキューに追加
+            for (HCAplusNet child : currentModel.children) {
+                 if (child != null) {
+                    queue.add(child);
+                 }
             }
         }
-        
-        System.out.println("--- Exporting neurons for all levels complete ---");
+        return totalNodes;
     }
-
-    /**
-     * HCA+モデルを再帰的に探索し、各レベルのノードを収集するヘルパーメソッド。
-     * @param model 現在の階層のモデル
-     * @param currentLevel 現在の階層レベル
-     * @param neuronsByLevel 各レベルのノードを格納するマップ
-     * @param numClasses クラス数
-     */
-    private void collectNeuronsPerLevelRecursive(HCAplusNet model, int currentLevel, Map<Integer, List<LeafNodeInfo>> neuronsByLevel, int numClasses) {
-        if (model == null) {
-            return;
-        }
-
-        // 現在のレベルのノードを収集
-        List<LeafNodeInfo> currentLevelNeurons = neuronsByLevel.computeIfAbsent(currentLevel, k -> new ArrayList<>());
-        for (int i = 0; i < model.numNodes; i++) {
-            if (model.CountNode != null && i < model.CountNode.length && model.CountNode[i] > 0) {
-                int classLabel = -1;
-                int maxCount = -1;
-                if (model.CountLabel != null && i < model.CountLabel.length) {
-                    for (int j = 0; j < model.CountLabel[i].length; j++) {
-                        if (model.CountLabel[i][j] > maxCount) {
-                            maxCount = model.CountLabel[i][j];
-                            classLabel = j;
-                        }
-                    }
-                }
-
-                if (classLabel != -1) {
-                    currentLevelNeurons.add(new LeafNodeInfo(model.weight[i], classLabel, model.CountNode[i]));
-                }
-            }
-        }
-
-        // 子モデルが存在する場合、再帰的に探索
-        if (model.Child != null) {
-            for (HCAplusNet childModel : model.Child.values()) {
-                collectNeuronsPerLevelRecursive(childModel, currentLevel + 1, neuronsByLevel, numClasses);
-            }
-        }
-    }
-    
-    // GenerateExcelFromRecordALL.m のロジックもここに実装可能ですが、
-    // まずはHCAplusのコア機能である訓練と評価に焦点を当てます。
 }
