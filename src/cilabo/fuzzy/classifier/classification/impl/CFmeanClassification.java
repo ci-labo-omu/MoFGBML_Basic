@@ -9,7 +9,7 @@ import cilabo.gbml.solution.michiganSolution.MichiganSolution;
 /**
  * 未実装
  * (実装完了時は上のコメントを削除してください)
- * @author hirot
+ * @author hiroki tagkigawa
  *
  */
 @Deprecated
