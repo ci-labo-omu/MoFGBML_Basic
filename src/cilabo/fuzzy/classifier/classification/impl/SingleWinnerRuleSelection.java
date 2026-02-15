@@ -21,6 +21,9 @@ public final class SingleWinnerRuleSelection <michiganSolution extends MichiganS
 	 * @param attributeVector 入力パターン
 	 * @return 勝利となったMichiganSolution 識別不能時はnull
 	 */
+
+	private static final double EPS = 1e-16;
+
 	@Override
 	public michiganSolution classify(List<michiganSolution> michiganSolutionList, Pattern<?> pattern) {
 		if(michiganSolutionList.size() < 1) {
@@ -36,13 +39,13 @@ public final class SingleWinnerRuleSelection <michiganSolution extends MichiganS
 			double value = michiganSolution.getFitnessValue(pattern.getAttributeVector()); //適合度計算
 
 			//最大値更新ケース
-			if(value > max) {
+			if(value > max + EPS) {
 				max = value;
 				winner = q;
 				canClassify = true;
 			}
 			//最大値が同値を取る場合
-			else if(value == max) {
+			else if(Math.abs(value - max) <= EPS) {
 				MichiganSolution<?> winnerRule = michiganSolutionList.get(winner);
 				// "membership*CF"が同値 かつ 結論部クラスが異なる場合識別不能とする
 				if(!michiganSolution.getClassLabel().equalsClassLabel(winnerRule.getClassLabel())) {
@@ -50,7 +53,6 @@ public final class SingleWinnerRuleSelection <michiganSolution extends MichiganS
 				}
 			}
 		}
-
 
 		//識別可能である場合勝利ルールを返す
 		if(canClassify && max >= 0) {

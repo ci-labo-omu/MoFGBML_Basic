@@ -39,7 +39,7 @@ import cilabo.fuzzy.rule.consequent.factory.impl.MoFGBML_Learning;
 import cilabo.fuzzy.rule.impl.Rule_Basic;
 import cilabo.gbml.algorithm.HybridMoFGBMLwithNSGAII;
 import cilabo.gbml.objectivefunction.michigan.RuleLength;
-import cilabo.gbml.objectivefunction.pittsburgh.ErrorRate;
+import cilabo.gbml.objectivefunction.pittsburgh.ErrorRateNoSideEffect;
 import cilabo.gbml.operator.crossover.HybridGBMLcrossover;
 import cilabo.gbml.operator.crossover.MichiganCrossover;
 import cilabo.gbml.operator.crossover.PittsburghCrossover;
@@ -115,8 +115,8 @@ public class MoFGBML_Basic_Main {
 
 		/* Load Dataset ======================== */
 		Input.loadTrainTestFiles_Basic(MoFGBML_Basic_CommandLineArgs.trainFile, MoFGBML_Basic_CommandLineArgs.testFile);
-		DataSet<Pattern_Basic> test = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTests().get(0);
 		DataSet<Pattern_Basic> train = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTrains().get(0);
+		DataSet<Pattern_Basic> test = (DataSet<Pattern_Basic>) DataSetManager.getInstance().getTests().get(0);
 
 
 		/** XML ファイル出力用インスタンスの生成*/
@@ -354,8 +354,8 @@ public class MoFGBML_Basic_Main {
             double AveRW = TotalRW/(nonDominatedSolutions.get(i).getNumberOfVariables());
 
 
-            ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1
-			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
+            ErrorRateNoSideEffect<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1
+			= new ErrorRateNoSideEffect<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetest = function1.function(nonDominatedSolutions.get(i), test);
 
 	    	str = String.valueOf(i);
@@ -429,8 +429,8 @@ public class MoFGBML_Basic_Main {
             }
             double AveRWARC = TotalRWARC/(nonDominatedSolutionsARC.get(i).getNumberOfVariables());
 
-            ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1ARC
-			= new ErrorRate<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
+            ErrorRateNoSideEffect<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>> function1ARC
+			= new ErrorRateNoSideEffect<PittsburghSolution_Basic<MichiganSolution_Basic<Rule_Basic>>>();
 		    double errorRatetestARC = function1ARC.function(nonDominatedSolutionsARC.get(i), test);
 
 	    	strARC = String.valueOf(i);
